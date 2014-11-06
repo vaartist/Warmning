@@ -1,0 +1,10 @@
+
+------------------- TRACEBACK -------------------------
+Module "Err  " Message   4: file ".\err.c   " line 1547
+Module "VTab " Message   4: file ".\err.c   " line 645
+Module "CBlok" Message  -1: file "..\avenue\cblok.c" line 1552
+Module "CBlok" Message  -1: file "..\avenue\cblok.c" line 1552
+Module "Script" Message  -1: file "..\avenue\script.c" line 151
+Module "MBar " Message  -1: file ".\mbar.c  " line 2963
+Module "Event" Message  -1: file ".\event.c " line 2594
+FATAL ERROR     Error frame corrupted: unrealistic id
