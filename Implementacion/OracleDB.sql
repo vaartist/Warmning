@@ -52,7 +52,7 @@ CREATE TABLE Estacion_Bomberos(
 	Nombre VARCHAR2(25),
 	Direccion VARCHAR2(100),
 	PerteneceA INTEGER,
-	Geom SDO_GEOMETRY,
+	Geom geometry,
 	CONSTRAINT pk_estacionbomberos PRIMARY KEY(Nombre),
 	CONSTRAINT fk_estacionbomberos_distrito FOREIGN KEY(PerteneceA) REFERENCES Distrito
 );
@@ -61,14 +61,14 @@ CREATE TABLE Camino(
 	Numero_Ruta VARCHAR2(15),
 	Tipo VARCHAR2(15),
 	Longitud DOUBLE,
-	Geom SDO_GEOMETRY,
+	Geom geometry,
 	CONSTRAINT pk_camino PRIMARY KEY(Numero_Ruta)
 );
 CREATE TABLE Zonas_Riesgo(
 	Meses_Secos INTEGER,
 	Velocidad_Viento VARCHAR2(10),
 	Riesgo VARCHAR2(10) NOT NULL,
-	Geom SDO_GEOMETRY,
+	Geom geometry,
 	CONSTRAINT pk_zonasriesgo PRIMARY KEY(Meses_Secos,Velocidad_Viento)
 );
 /* Hacer trigger que revise que cobertura es mayor a 0? */
@@ -107,62 +107,6 @@ CREATE TABLE Informacion_Carreteras_Canton(
 	CONSTRAINT fk_informacioncarreterascanton_canton FOREIGN KEY(Codigo_Canton) REFERENCES Canton
 );
 
-/* INSERTS DE METADATA */
-/* FALTA DEFINIR EL SDO_DIM_ELEMENTS */
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Provincia',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Canton',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Distrito',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Estacion_Bomberos',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Camino',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
-INSERT INTO USER_SDO_GEOM_METADATA VALUES(
-	'Zonas_Riesgo',
-	'Geom',
-	SDO_DIM_ARRAY(
-		SDO_DIM_ELEMENT(),
-		SDO_DIM_ELEMENT()
-	),
-	NULL
-);
 
 /* CREACION DE INDICES */
 CREATE INDEX state_spatial_idx ON Provincia(Geom)
@@ -183,6 +127,4 @@ INDEXTYPE IS MDSYS.SPATIAL_INDEX;
 CREATE INDEX state_spatial_idx ON Zonas_Riesgo(Geom)
 INDEXTYPE IS MDSYS.SPATIAL_INDEX;
 
-/* PARA REFRESH LOS INDICES DESPUES DE UN INSERT */
-ALTER INDEX state_spatial_idx REBUILD;
 
