@@ -73,6 +73,11 @@ From cantonTmp C join provinciaTmp P on C.geom.STIntersects(P.geom) = 1
 Group by NCANTON
 Having count(*) > 1;
 
+-- Ejecutar cuando exista el trigger
+Insert into Canton
+Select codnum, ncanton, null, geom From cantonTmp;
+
+
 
 -- Limpieza de Distrito
 -- 4 geometrias invalidas
@@ -111,3 +116,84 @@ Select CODDIST, NDISTRITO, geometry::UnionAggregate( geom )
 From distritoTmp
 Group By CODDIST, NDISTRITO;
 
+-- Ejecutar cuando exista el trigger y los distritos sean unicos
+Insert into Distrito
+Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp;
+
+
+
+-- Limpieza de Bomberos
+-- No hay geometrias invalidas
+SELECT NOMBRE, geom.STIsValid()
+FROM bomberosTmp
+Where geom.STIsValid() = 0;
+
+Select * from bomberosTmp;
+
+-- Ejecutar cuando exista el trigger
+Insert into Estacion_Bomberos
+Select Nombre, Direccion, null, geom From bomberosTmp;
+
+Insert into Unidades_Estacion_Bomberos
+Select Nombre, 'Extintoras', dbo.ParseNumber(Extintoras) From bomberosTmp;
+Insert into Unidades_Estacion_Bomberos
+Select Nombre, 'Rescate', dbo.ParseNumber(Rescate) From bomberosTmp;
+Insert into Unidades_Estacion_Bomberos
+Select Nombre, 'Forestales', dbo.ParseNumber(Forestales) From bomberosTmp;
+
+-- Limpieza de Zonas Riesgo
+-- Todas las geometrias son validas
+SELECT CLASIFICAC, RIESGO, MESSEC, geom.STIsValid()
+FROM zonas_riesgoTmp
+Where geom.STIsValid() = 0;
+
+-- Cerrar geometrias
+UPDATE zonas_riesgoTmp
+SET geom = geometry::STGeomFromWKB(geom.STUnion(geom.STStartPoint()).STAsBinary(), geom.STSrid);
+
+-- Smoothing
+UPDATE zonas_riesgoTmp
+SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
+
+-- Remover puntos de mas
+UPDATE zonas_riesgoTmp
+SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
+
+Select * from zonas_riesgoTmp;
+
+-- Hay 2 que no cumplen la tercera forma normal como se propuso
+Select grupo.messec, grupo.clasificac
+From (Select distinct messec, clasificac, RIESGO
+		From zonas_riesgoTmp) grupo
+Group by MESSEC, CLASIFICAC
+having count(*) > 1;
+
+-- Ocupo el aggregate para unir las zonas por la llave
+
+-- Ejecutar cuando el trigger que calcula las areas exista y los datos sean validos
+Insert into Zonas_Riesgo
+Select messec, clasificac, riesgo from zonas_riesgoTmp;
+
+
+
+-- Limpieza de Caminos
+-- 20 geometrias invalidas
+SELECT Ruta, geom.STIsValid()
+FROM caminoTmp
+Where geom.STIsValid() = 0;
+
+-- Validar
+UPDATE caminoTmp
+SET geom = geometry::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
+WHERE geom.STIsValid() = 0;
+-- Ahora todas son validas
+
+-- Smoothing
+UPDATE caminoTmp
+SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
+
+-- Remover puntos de mas
+UPDATE caminoTmp
+SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
+
+Select * from caminoTmp;
