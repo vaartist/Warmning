@@ -106,6 +106,58 @@ CLOSE v_cursor_interDistrit
 DEALLOCATE v_cursor_interDistrit
 DEALLOCATE v_cursor_interZR
 
+
+
+-- Procedimiento para importar datos de carreteras asfaltadas a Cantones
+DECLARE @CodCanton INTEGER,
+	@NombreCanton varchar(25),
+	@Kilometros FLOAT
+DECLARE cursor_tabla CURSOR FOR
+	SELECT *	FROM carreteras_asfalto
+OPEN cursor_tabla
+FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	SET @CodCanton = ( SELECT Codigo FROM Canton Where Nombre = UPPER(@NombreCanton) )
+	INSERT INTO Informacion_Carreteras_Canton VALUES( @CodCanton, 'Asfalto', @Kilometros )
+	FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
+
+-- Procedimiento para importar datos de carreteras de concreto a Cantones
+DECLARE @CodCanton INTEGER,
+	@NombreCanton varchar(25),
+	@Kilometros FLOAT
+DECLARE cursor_tabla CURSOR FOR
+	SELECT *	FROM carreteras_concreto
+OPEN cursor_tabla
+FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	SET @CodCanton = ( SELECT Codigo FROM Canton Where Nombre = UPPER(@NombreCanton) )
+	INSERT INTO Informacion_Carreteras_Canton VALUES( @CodCanton, 'Concreto', @Kilometros )
+	FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
+
+-- Procedimiento para importar datos de carreteras de lastre a Cantones
+DECLARE @CodCanton INTEGER,
+	@NombreCanton varchar(25),
+	@Kilometros FLOAT
+DECLARE cursor_tabla CURSOR FOR
+	SELECT *	FROM carreteras_lastre
+OPEN cursor_tabla
+FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	SET @CodCanton = ( SELECT Codigo FROM Canton Where Nombre = UPPER(@NombreCanton) )
+	INSERT INTO Informacion_Carreteras_Canton VALUES( @CodCanton, 'Lastre', @Kilometros )
+	FETCH NEXT FROM cursor_tabla INTO @NombreCanton, @Kilometros
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
 --Procedimiento almacenado para pasar a mayúsculas y eliminar tildes
 CREATE FUNCTION Normalizar_Nombre
 (

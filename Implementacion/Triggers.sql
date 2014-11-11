@@ -6,7 +6,6 @@
 	-Trigger para revisar la relacion topologica de camino con canton, que calcula la longitud
 	-Trigger para revisar la relacion topologica de estacion_bomberos con distrito
 	-Trigger para revisar la relacion topologica de zonas_riesgo con distrito, que calcula el area
-	-Procedimiento para insertar los datos de informacion de carreteras a canton x3
 */
 
 --Trigger para revisar que la geometria de provincia es valida
