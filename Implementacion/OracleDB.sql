@@ -63,7 +63,7 @@ CREATE TABLE Estacion_Bomberos(
 );
 /* Trigger que calcule la longitud del camino */
 CREATE TABLE Camino(
-	NumeroRuta				VARCHAR(15),
+	NumeroRuta				VARCHAR(60),
 	Tipo					VARCHAR(15),
 	Longitud				FLOAT, -- Kilometros
 	Geom					geometry,

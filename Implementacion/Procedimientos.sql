@@ -33,10 +33,9 @@ END
 GO
 
 
--- Borrar las rows de 'Costa Rica' y 'Provincias'
-DELETE FROM viviendasYpoblacion WHERE Hombres>160000;
 -- Procedimiento para insertar los datos de viviendas y poblacion a distrito
-DECLARE @Canton VARCHAR(20),
+DECLARE
+	@Canton VARCHAR(20),
 	@FK_Canton INTEGER,
 	@Distrito VARCHAR(20),
 	@Hombres INTEGER,
@@ -48,28 +47,32 @@ DECLARE v_cursor_viviendaTemp CURSOR FOR
 	SELECT * FROM viviendasYpoblacion;
 OPEN v_cursor_viviendaTemp
 FETCH NEXT FROM v_cursor_viviendaTemp INTO @Distrito,@Hombres,@Mujeres,@Ocupadas,@Desocupadas,@Colectivas
-WHILE @@FETCH_STATUS = 0
+WHILE (@@FETCH_STATUS = 0)
 BEGIN
-	IF @Distrito=NULL
+	IF (LEN(@Distrito)>0)
 	BEGIN
-		SET @Canton = @Distrito;
-	END
-	ELSE
-	BEGIN
-		IF @Canton=NULL
+		SET @Distrito = dbo.Normalizar_Nombre(@Distrito);
+		IF (LEN(@Canton)>0)
+		BEGIN
+			UPDATE Distrito SET PoblacionHombres=@Hombres,PoblacionMujeres=@Mujeres,ViviendasOcupadas=@Ocupadas,ViviendasDesocupadas=@Desocupadas,ViviendasColectivas=@Colectivas WHERE Nombre=@Distrito AND CodigoCanton = @FK_Canton;
+		END
+		ELSE
 		BEGIN
 			SET @Canton = @Distrito;
 			SET @FK_Canton = (SELECT c.Codigo FROM Canton c WHERE c.Nombre=@Canton);
 		END
-		ELSE
-		BEGIN
-			UPDATE Distrito SET PoblacionHombres=@Hombres,PoblacionMujeres=@Mujeres,ViviendasOcupadas=@Ocupadas,ViviendasDesocupadas=@Desocupadas,ViviendasColectivas=@Colectivas WHERE Nombre = @Distrito AND CodigoCanton = @FK_Canton;
-		END
+	END
+	ELSE
+	BEGIN
+		SET @Canton = @Distrito;
 	END
 	FETCH NEXT FROM v_cursor_viviendaTemp INTO @Distrito,@Hombres,@Mujeres,@Ocupadas,@Desocupadas,@Colectivas
 END
 CLOSE v_cursor_viviendaTemp
 DEALLOCATE v_cursor_viviendaTemp
+
+SELECT * from viviendasYpoblacion
+SELECT * FROM DISTRITO;
 
 
 -- Procedimiento que (una vez establecidos los distritos y zonas de riesgo) calcula la interseccion de ambas tablas

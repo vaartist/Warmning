@@ -253,4 +253,16 @@ SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STA
 UPDATE caminoTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
+-- Unir caminos con mismo nombre
+CREATE TABLE caminoTmp2(
+	id INT,
+	Ruta VARCHAR(255),
+	Tipo VARCHAR(15),
+	Geom geometry
+);
+
+DROP TABLE caminoTmp2;
+
+
 Select * from caminoTmp;
+
