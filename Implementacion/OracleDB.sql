@@ -37,7 +37,7 @@ CREATE TABLE Canton(
 /* Agregar triggers de restricciones positivas para los integers */
 CREATE TABLE Distrito(
 	Codigo						INTEGER,
-	Nombre						VARCHAR(20) NOT NULL,
+	Nombre						VARCHAR(25) NOT NULL,
 	CodigoCanton				INTEGER NOT NULL,
 	PoblacionHombres			INTEGER,
 	PoblacionMujeres			INTEGER,

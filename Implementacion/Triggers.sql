@@ -6,7 +6,6 @@
 	-Trigger para revisar la relacion topologica de camino con canton, que calcula la longitud
 	-Trigger para revisar la relacion topologica de estacion_bomberos con distrito
 	-Trigger para revisar la relacion topologica de zonas_riesgo con distrito, que calcula el area
-	-Procedimiento para insertar los datos de informacion de carreteras a canton x3
 */
 
 --Trigger para revisar que la geometria de provincia es valida
@@ -140,8 +139,70 @@ AS
 	CLOSE cursor_tabla
 	DEALLOCATE cursor_tabla
 --Fin de trigger
+--DELETE FROM Canton
+--SELECT * FROM Canton
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --Trigger para revisar la relacion topologica de distrito con canton
+DROP TRIGGER distritos_insert;
+CREATE TRIGGER distritos_insert
+ON Distrito
+INSTEAD OF INSERT
+AS
+	--Declarar variables para cursor
+	DECLARE @Codigo						INTEGER,
+			@Nombre						VARCHAR(20),
+			@CodigoCanton				INTEGER,
+			@PoblacionHombres			INTEGER,
+			@PoblacionMujeres			INTEGER,
+			@ViviendasOcupadas			INTEGER,
+			@ViviendasDesocupadas		INTEGER,
+			@ViviendasColectivas		INTEGER,
+			@Geom						GEOMETRY,
+			@CodigoDistritoCorrecto		INTEGER
+	--Declararar el cursor principal, hecho para iterar por todas las tuplas que se están insertando en la tabla de cantones.
+	DECLARE cursor_tabla CURSOR FOR
+	SELECT	*
+	FROM INSERTED
+	--Abrir cursor principal y usar FETCH
+	OPEN cursor_tabla
+	FETCH cursor_tabla INTO @Codigo, @Nombre, @CodigoCanton, @PoblacionHombres, @PoblacionMujeres, @ViviendasOcupadas, @ViviendasDesocupadas, @ViviendasColectivas, @Geom
+	WHILE(@@FETCH_STATUS = 0)
+	BEGIN
+		--Determinar con cuál provincia es mayor el área de intersección con la geometría del nuevo cantón
+		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() = 'Polygon' OR @Geom.STGeometryType() = 'MultiPolygon') )
+		BEGIN
+			--Declarar el cursor interno, la consulta obtiene el código y las áreas de intersección entre el cantón y todas las provincias,
+			--luego ordena por área y descendentemente para que el cursor obtenga el primer código (correspondiente al área de intersección mayor).
+			DECLARE cursor_tabla_interna CURSOR FOR
+			SELECT	Codigo
+			FROM	Canton
+			GROUP BY Codigo
+			ORDER BY MAX(Geom.STIntersection(@Geom).STArea()) DESC
+			--Se usa el cursor interno para obtener el código de la provincia correspondiente al cantón
+			OPEN cursor_tabla_interna
+			FETCH cursor_tabla_interna INTO @CodigoDistritoCorrecto
+			--Se usa ese código para insertar el cantón de una vez
+			INSERT INTO Distrito
+			VALUES(@Codigo, @Nombre, @CodigoDistritoCorrecto, @PoblacionHombres, @PoblacionMujeres, @ViviendasOcupadas, @ViviendasDesocupadas, @ViviendasColectivas, @Geom)
+			--OPCIONAL, avisarle al usuario la provincia a la que se está asociando el cantón, en caso de que especificara una errónea se dará cuenta de la correción
+			--Print 'El cantón fue asociado a la provincia ' + (SELECT Nombre FROM Provincia WHERE Codigo=@CodigoDistritoCorrecto)
+			CLOSE cursor_tabla_interna
+			DEALLOCATE cursor_tabla_interna
+		END
+		ELSE
+			Print 'ERROR: Geometría no valida para provincia con nombre ' + @Nombre
+		FETCH NEXT FROM cursor_tabla INTO @Codigo, @Nombre, @CodigoCanton, @PoblacionHombres, @PoblacionMujeres, @ViviendasOcupadas, @ViviendasDesocupadas, @ViviendasColectivas, @Geom
+	END
+	--Cerrar cursor
+	CLOSE cursor_tabla
+	DEALLOCATE cursor_tabla
+--Fin de trigger
+--DELETE FROM Distrito
+--SELECT * FROM Distrito
 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+select * from viviendasYpoblacion
