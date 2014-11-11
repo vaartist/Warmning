@@ -1,4 +1,5 @@
 --Procedimientos almacenados.
+USE DW_user4;
 
 --Procedimiento almacenado para obtener numeros de un string
 CREATE FUNCTION dbo.ParseNumericChars
@@ -105,3 +106,29 @@ CLOSE v_cursor_interDistrit
 DEALLOCATE v_cursor_interDistrit
 DEALLOCATE v_cursor_interZR
 
+--Procedimiento almacenado para pasar a mayúsculas y eliminar tildes
+CREATE FUNCTION Normalizar_Nombre
+(
+	@STRING		VARCHAR(MAX)
+)
+RETURNS	VARCHAR(MAX)
+AS
+BEGIN
+	--Primero pasar a mayúsculas, puede haber mayúsculas tildadas
+	SET @STRING = UPPER(@STRING);
+	--Reemplazar todos los caracteres raros (agregar más de ser necesario)
+	SET @STRING = REPLACE(@STRING, 'Á', 'A');
+	SET @STRING = REPLACE(@STRING, 'É', 'E');
+	SET @STRING = REPLACE(@STRING, 'Í', 'I');
+	SET @STRING = REPLACE(@STRING, 'Ó', 'O');
+	SET @STRING = REPLACE(@STRING, 'Ú', 'U');
+	SET @STRING = REPLACE(@STRING, 'Ñ', 'N');
+	RETURN @STRING
+END
+GO
+--DROP FUNCTION Normalizar_Nombre
+--Probarlo
+DECLARE @result VARCHAR(MAX)
+SET		@result = 'San José Éstípulas';
+SET		@result = dbo.Normalizar_Nombre(@result);
+PRINT	@result;
