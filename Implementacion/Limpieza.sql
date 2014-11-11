@@ -65,6 +65,9 @@ SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STA
 UPDATE cantonTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
+Delete from cantonTmp
+Where NCANTON = 'NA';
+
 Select * from cantonTmp;
 
 -- Sin embargo, hay 62 cantones que intersecan con mas de una provincia...
@@ -105,16 +108,69 @@ SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSri
 
 Select * from distritoTmp;
 
+Delete from distritoTmp
+Where NDISTRITO = 'NA';
+
 -- Ocurre que hay distritos que no son unicos...
-Select CODDIST, count(*)
+Select CODDIST
 From distritoTmp
 Group by CODDIST
 Having count(*) > 2;
 
 -- Para exportar a la tabla distrito hay que hacer union de geometrias mediante coddist
-Select CODDIST, NDISTRITO, geometry::UnionAggregate( geom )
-From distritoTmp
-Group By CODDIST, NDISTRITO;
+Create Table distritoTmp2
+(
+	ID			int primary key,
+	NDistrito	nvarchar(255),
+	CODDIST		int,
+	geom		geometry
+);
+
+Declare @ID integer,
+		@NDistrito nvarchar(255),
+		@Coddist int,
+		@Geom geometry,
+		@NDistritoPrev nvarchar(255),
+		@CoddistPrev int,
+		@UnionGeo geometry
+SET @ID = 0
+Declare distritos_repetidos cursor for
+	Select NDistrito, CODDIST, geom
+	From distritoTmp
+	Order by CODDIST
+OPEN distritos_repetidos
+FETCH NEXT FROM distritos_repetidos INTO @NDistrito, @Coddist, @Geom
+IF @@FETCH_STATUS = 0
+BEGIN
+	SET @UnionGeo = @Geom
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		If( @CoddistPrev = @Coddist )
+		BEGIN
+			SET @UnionGeo = @UnionGeo.STUnion( @UnionGeo )
+		END
+		ELSE
+		BEGIN
+			IF( @CoddistPrev is not NULL )
+			BEGIN
+				Insert into distritoTmp2 Values( @ID, @NDistritoPrev, @CoddistPrev, @UnionGeo )
+			END
+			SET @NDistritoPrev = @NDistrito
+			SET @CoddistPrev = @Coddist
+			SET @UnionGeo = @Geom
+			SET @ID = @ID + 1
+		END
+		FETCH NEXT FROM distritos_repetidos INTO @NDistrito, @Coddist, @Geom
+	END
+	Insert into distritoTmp2 Values( @ID, @NDistritoPrev, @CoddistPrev, @UnionGeo )
+END
+CLOSE distritos_repetidos
+DEALLOCATE distritos_repetidos
+
+Select * from distritoTmp2;
+Delete from distritoTmp2;
+
+Drop Table distritoTmp2;
 
 -- Ejecutar cuando exista el trigger y los distritos sean unicos
 Insert into Distrito
@@ -132,7 +188,7 @@ Select * from bomberosTmp;
 
 -- Ejecutar cuando exista el trigger
 Insert into Estacion_Bomberos
-Select Nombre, Direccion, null, geom From bomberosTmp;
+Select Nombre, Direccion, 0, geom From bomberosTmp;
 
 Insert into Unidades_Estacion_Bomberos
 Select Nombre, 'Extintoras', dbo.ParseNumber(Extintoras) From bomberosTmp;
