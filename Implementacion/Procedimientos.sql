@@ -33,6 +33,8 @@ END
 GO
 
 
+-- Borrar las rows de 'Costa Rica' y 'Provincias'
+DELETE FROM viviendasYpoblacion WHERE Hombres>160000;
 -- Procedimiento para insertar los datos de viviendas y poblacion a distrito
 DECLARE @Canton VARCHAR(20),
 	@FK_Canton INTEGER,
@@ -61,10 +63,45 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			UPDATE Distrito SET Poblacion_H=@Hombres,Poblacion_M=@Mujeres,ViviendasO=@Ocupadas,ViviendasD=@Desocupadas,ViviendasC=@Colectivas WHERE Nombre = @Distrito AND PerteneceA = @FK_Canton;
+			UPDATE Distrito SET PoblacionHombres=@Hombres,PoblacionMujeres=@Mujeres,ViviendasOcupadas=@Ocupadas,ViviendasDesocupadas=@Desocupadas,ViviendasColectivas=@Colectivas WHERE Nombre = @Distrito AND CodigoCanton = @FK_Canton;
 		END
 	END
 	FETCH NEXT FROM v_cursor_viviendaTemp INTO @Distrito,@Hombres,@Mujeres,@Ocupadas,@Desocupadas,@Colectivas
 END
 CLOSE v_cursor_viviendaTemp
 DEALLOCATE v_cursor_viviendaTemp
+
+
+-- Procedimiento que (una vez establecidos los distritos y zonas de riesgo) calcula la interseccion de ambas tablas
+DECLARE @CodDistrito	INTEGER,
+	@GeomDistrito		geometry,
+	@MesesSecos			INTEGER,
+	@VelocidadViento	VARCHAR(10),
+	@GeomZR				geometry,
+	@Cobertura			FLOAT
+DECLARE v_cursor_interDistrit CURSOR FOR
+	SELECT Codigo,Geom FROM Distrito;
+DECLARE v_cursor_interZR CURSOR FOR
+	SELECT MesesSecos,VelocidadViento,Geom FROM Zonas_Riesgo;
+OPEN v_cursor_interDistrit
+FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	OPEN v_cursor_interZR
+	FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		IF @GeomDistrito.STIntersects(@GeomZR) != null
+		BEGIN
+			SET @Cobertura = @GeomDistrito.STIntersection(@GeomZR).STArea() / @GeomDistrito.STArea();
+			INSERT INTO Interseca VALUES (@CodDistrito,@MesesSecos,@VelocidadViento,@Cobertura);
+		END
+		FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
+	END
+	CLOSE v_cursor_interZR
+	FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
+END
+CLOSE v_cursor_interDistrit
+DEALLOCATE v_cursor_interDistrit
+DEALLOCATE v_cursor_interZR
+
