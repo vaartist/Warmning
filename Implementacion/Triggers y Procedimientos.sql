@@ -120,6 +120,9 @@ END
 GO
 
 
+-- Eliminar la row de 'Costa Rica' y las row's de provincias
+DELETE FROM viviendasYpoblacion WHERE Lugar='Costa Rica';
+DELETE FROM viviendasYpoblacion WHERE 
 -- Procedimiento para insertar los datos de viviendas y poblacion a distrito
 DECLARE @Canton VARCHAR(20),
 	@FK_Canton INTEGER,
@@ -148,7 +151,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			UPDATE Distrito SET Poblacion_H=@Hombres,Poblacion_M=@Mujeres,ViviendasO=@Ocupadas,ViviendasD=@Desocupadas,ViviendasC=@Colectivas WHERE Nombre = @Distrito AND PerteneceA = @FK_Canton;
+			UPDATE Distrito SET PoblacionHombres=@Hombres,PoblacionMujeres=@Mujeres,ViviendasOcupadas=@Ocupadas,ViviendasDesocupadas=@Desocupadas,ViviendasColectivas=@Colectivas WHERE Nombre = @Distrito AND CodigoCanton = @FK_Canton;
 		END
 	END
 	FETCH NEXT FROM v_cursor_viviendaTemp INTO @Distrito,@Hombres,@Mujeres,@Ocupadas,@Desocupadas,@Colectivas
