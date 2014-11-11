@@ -130,39 +130,34 @@ Declare @ID integer,
 		@NDistrito nvarchar(255),
 		@Coddist int,
 		@Geom geometry,
-		@NDistritoPrev nvarchar(255),
-		@CoddistPrev int,
 		@UnionGeo geometry
-SET @ID = 0
+SET @ID = 1
 Declare distritos_repetidos cursor for
-	Select NDistrito, CODDIST, geom
+	Select distinct CODDIST, NDISTRITO
 	From distritoTmp
-	Order by CODDIST
 OPEN distritos_repetidos
-FETCH NEXT FROM distritos_repetidos INTO @NDistrito, @Coddist, @Geom
-IF @@FETCH_STATUS = 0
+FETCH NEXT FROM distritos_repetidos INTO @Coddist, @NDistrito
+WHILE( @@FETCH_STATUS = 0 )
 BEGIN
-	SET @UnionGeo = @Geom
-	WHILE @@FETCH_STATUS = 0
+	-- Ciclo anidado
+	Declare distritos_codigo cursor for
+		Select geom
+		From distritoTmp
+		Where CODDIST = @Coddist
+	OPEN distritos_codigo
+	FETCH NEXT FROM distritos_codigo INTO @Geom
+	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
-		If( @CoddistPrev = @Coddist )
-		BEGIN
-			SET @UnionGeo = @UnionGeo.STUnion( @UnionGeo )
-		END
-		ELSE
-		BEGIN
-			IF( @CoddistPrev is not NULL )
-			BEGIN
-				Insert into distritoTmp2 Values( @ID, @NDistritoPrev, @CoddistPrev, @UnionGeo )
-			END
-			SET @NDistritoPrev = @NDistrito
-			SET @CoddistPrev = @Coddist
-			SET @UnionGeo = @Geom
-			SET @ID = @ID + 1
-		END
-		FETCH NEXT FROM distritos_repetidos INTO @NDistrito, @Coddist, @Geom
+		SET @UnionGeo = @Geom.STUnion( @UnionGeo ) 
+		FETCH NEXT FROM distritos_codigo INTO @Geom
 	END
-	Insert into distritoTmp2 Values( @ID, @NDistritoPrev, @CoddistPrev, @UnionGeo )
+	INSERT INTO distritoTmp2 VALUES( @ID, @NDistrito, @Coddist, @Geom )
+	CLOSE distritos_codigo
+	DEALLOCATE distritos_codigo
+	-- Fin ciclo anidado
+
+	SET @ID = @ID + 1
+	FETCH NEXT FROM distritos_repetidos INTO @Coddist, @NDistrito
 END
 CLOSE distritos_repetidos
 DEALLOCATE distritos_repetidos
@@ -172,9 +167,15 @@ Delete from distritoTmp2;
 
 Drop Table distritoTmp2;
 
+-- ¡Ya son unicos!
+Select CODDIST
+From distritoTmp2
+Group by CODDIST
+Having count(*) > 2;
+
 -- Ejecutar cuando exista el trigger y los distritos sean unicos
 Insert into Distrito
-Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp;
+Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp2;
 
 
 

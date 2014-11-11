@@ -32,87 +32,96 @@ CREATE TABLE Canton(
 	
 	CONSTRAINT pk_canton PRIMARY KEY(codigo),
 	CONSTRAINT fk_canton_provincia FOREIGN KEY(codigoProvincia) REFERENCES Provincia
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Agregar triggers de restricciones positivas para los integers */
 CREATE TABLE Distrito(
 	Codigo						INTEGER,
 	Nombre						VARCHAR(20) NOT NULL,
-	PerteneceA					INTEGER NOT NULL,
-	Poblacion_H					INTEGER,
-	Poblacion_M					INTEGER,
-	ViviendasO					INTEGER,
-	ViviendasD					INTEGER,
-	ViviendasC					INTEGER,
+	CodigoCanton				INTEGER NOT NULL,
+	PoblacionHombres			INTEGER,
+	PoblacionMujeres			INTEGER,
+	ViviendasOcupadas			INTEGER,
+	ViviendasDesocupadas		INTEGER,
+	ViviendasColectivas			INTEGER,
 	Geom						geometry,
 
 	CONSTRAINT pk_distrito PRIMARY KEY(Codigo),
-	CONSTRAINT fk_distrito_canton FOREIGN KEY(PerteneceA) REFERENCES Canton
+	CONSTRAINT fk_distrito_canton FOREIGN KEY(CodigoCanton) REFERENCES Canton
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Haremos trigger que calcule a que distrito pertenece la estacion_bomberos (la f.k)? */
 CREATE TABLE Estacion_Bomberos(
-	Nombre VARCHAR(25),
-	Direccion VARCHAR(100),
-	PerteneceA INTEGER,
-	Geom geometry,
+	Nombre					VARCHAR(25),
+	Direccion				VARCHAR(100),
+	CodigoDistrito			INTEGER,
+	Geom					geometry,
 
 	CONSTRAINT pk_estacionbomberos PRIMARY KEY(Nombre),
-	CONSTRAINT fk_estacionbomberos_distrito FOREIGN KEY(PerteneceA) REFERENCES Distrito
+	CONSTRAINT fk_estacionbomberos_distrito FOREIGN KEY(CodigoDistrito) REFERENCES Distrito
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Trigger que calcule la longitud del camino */
 CREATE TABLE Camino(
-	Numero_Ruta VARCHAR(15),
-	Tipo VARCHAR(15),
-	Longitud FLOAT,
-	Geom geometry,
+	NumeroRuta				VARCHAR(15),
+	Tipo					VARCHAR(15),
+	Longitud				FLOAT, -- Kilometros
+	Geom					geometry,
 
-	CONSTRAINT pk_camino PRIMARY KEY(Numero_Ruta)
+	CONSTRAINT pk_camino PRIMARY KEY(NumeroRuta)
 );
 CREATE TABLE Zonas_Riesgo(
-	Meses_Secos INTEGER,
-	Velocidad_Viento VARCHAR(10),
-	Riesgo VARCHAR(10) NOT NULL,
-	Geom geometry,
+	MesesSecos					INTEGER,
+	VelocidadViento				VARCHAR(10),
+	Riesgo						VARCHAR(10) NOT NULL,
+	Geom						geometry,
 
-	CONSTRAINT pk_zonasriesgo PRIMARY KEY(Meses_Secos,Velocidad_Viento)
+	CONSTRAINT pk_zonasriesgo PRIMARY KEY(MesesSecos,VelocidadViento)
 );
 /* Hacer trigger que revise que cobertura es mayor a 0? */
 CREATE TABLE Interseca(
-	Codigo_Distrito INTEGER,
-	Meses_Secos INTEGER,
-	Velocidad_Viento VARCHAR(10),
-	Cobertura FLOAT,
+	CodigoDistrito				INTEGER,
+	MesesSecosZR				INTEGER,
+	VelocidadVientoZR			VARCHAR(10),
+	Cobertura					FLOAT, -- Porcentaje
 
-	CONSTRAINT pk_interseca PRIMARY KEY(Codigo_Distrito,Meses_Secos,Velocidad_Viento),
-	CONSTRAINT fk_interseca_distrito FOREIGN KEY(Codigo_Distrito) REFERENCES Distrito,
-	CONSTRAINT fk_interseca_zonasriesgo FOREIGN KEY(Meses_Secos,Velocidad_Viento) REFERENCES Zonas_Riesgo
+	CONSTRAINT pk_interseca PRIMARY KEY(CodigoDistrito,MesesSecosZR,VelocidadVientoZR),
+	CONSTRAINT fk_interseca_distrito FOREIGN KEY(CodigoDistrito) REFERENCES Distrito
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_interseca_zonasriesgo FOREIGN KEY(MesesSecosZR,VelocidadVientoZR) REFERENCES Zonas_Riesgo
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Trigger que calcule longitud */
 CREATE TABLE Cruza(
-	Codigo_Canton INTEGER,
-	Numero_Ruta_Camino VARCHAR(15),
+	CodigoCanton			INTEGER,
+	NumeroRutaCamino		VARCHAR(15),
 	Longitud FLOAT,
 
-	CONSTRAINT pk_cruza PRIMARY KEY(Codigo_Canton,Numero_Ruta_Camino),
-	CONSTRAINT fk_cruza_canton FOREIGN KEY(Codigo_Canton) REFERENCES Canton,
-	CONSTRAINT fk_cruza_camino FOREIGN KEY(Numero_Ruta_Camino) REFERENCES Camino
+	CONSTRAINT pk_cruza PRIMARY KEY(CodigoCanton,NumeroRutaCamino),
+	CONSTRAINT fk_cruza_canton FOREIGN KEY(CodigoCanton) REFERENCES Canton
+		ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT fk_cruza_camino FOREIGN KEY(NumeroRutaCamino) REFERENCES Camino
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Trigger que revise que cantidad > 0*/
 CREATE TABLE Unidades_Estacion_Bomberos(
-	Nombre_Estacion VARCHAR(25),
-	Tipo VARCHAR(10),
-	Cantidad INTEGER,
+	NombreEstacion			VARCHAR(25),
+	Tipo					VARCHAR(10),
+	Cantidad				INTEGER,
 
-	CONSTRAINT pk_unidades_estacion_bomberos PRIMARY KEY(Nombre_Estacion,Tipo),
-	CONSTRAINT fk_unidadesestacionbomberos_estacionbomberos FOREIGN KEY(Nombre_Estacion) REFERENCES Estacion_Bomberos
+	CONSTRAINT pk_unidades_estacion_bomberos PRIMARY KEY(NombreEstacion,Tipo),
+	CONSTRAINT fk_unidadesestacionbomberos_estacionbomberos FOREIGN KEY(NombreEstacion) REFERENCES Estacion_Bomberos
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 /* Calcular longitud? Revisar que sea mayor a 0 */
 CREATE TABLE Informacion_Carreteras_Canton(
-	Codigo_Canton INTEGER,
-	Tipo VARCHAR(10),
-	Longitud FLOAT,
+	CodigoCanton				INTEGER,
+	Tipo						VARCHAR(10),
+	Longitud					FLOAT,
 
-	CONSTRAINT pk_informacion_carreteras_canton PRIMARY KEY(Codigo_Canton,Tipo),
-	CONSTRAINT fk_informacioncarreterascanton_canton FOREIGN KEY(Codigo_Canton) REFERENCES Canton
+	CONSTRAINT pk_informacion_carreteras_canton PRIMARY KEY(CodigoCanton,Tipo),
+	CONSTRAINT fk_informacioncarreterascanton_canton FOREIGN KEY(CodigoCanton) REFERENCES Canton
+		ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
