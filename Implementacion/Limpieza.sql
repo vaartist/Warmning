@@ -200,7 +200,9 @@ UPDATE Distrito SET Nombre='EL TEJAR' WHERE Nombre='TEJAR';
 UPDATE Distrito SET Nombre='LA UNION' WHERE Nombre='UNION';
 UPDATE Distrito SET Nombre='EL CAIRO' WHERE Nombre='CAIRO';
 UPDATE Distrito SET Nombre='COLORADO' WHERE Nombre='COLORADO (CMD)';
-UPDATE Distrito SET NOMBRE = dbo.Normalizar_Nombre(Nombre);
+UPDATE Distrito SET Nombre='LA ASUNCION' WHERE Nombre='ASUNCION';
+UPDATE Distrito SET Nombre='VALLE LA ESTRELLA' WHERE Nombre='VALLE DE LA ESTRELLA';
+UPDATE Distrito SET NOMBRE = LTRIM(RTRIM(dbo.Normalizar_Nombre(Nombre)));
 
 -- Limpieza de Bomberos
 -- No hay geometrias invalidas
@@ -296,3 +298,4 @@ UPDATE viviendasYpoblacion SET Lugar = 'San José' WHERE Lugar='San José o Pizote
 UPDATE viviendasYpoblacion SET Lugar = 'Aguacaliente' WHERE Lugar='Aguacaliente o San Francisco';
 UPDATE viviendasYpoblacion SET Lugar = 'Guadalupe' WHERE Lugar='Guadalupe o Arenilla';
 UPDATE viviendasYpoblacion SET Lugar = 'Puerto Carrillo' WHERE Lugar='Puente Carrillo';
+UPDATE viviendasYpoblacion SET Lugar = LTRIM(RTRIM(Lugar));

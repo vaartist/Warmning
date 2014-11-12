@@ -38,7 +38,7 @@ GO
 DECLARE
 	@Canton VARCHAR(20),
 	@FK_Canton INTEGER,
-	@Distrito VARCHAR(20),
+	@Distrito VARCHAR(25),
 	@Hombres INTEGER,
 	@Mujeres INTEGER,
 	@Ocupadas INTEGER,
@@ -71,6 +71,10 @@ BEGIN
 END
 CLOSE v_cursor_viviendaTemp
 DEALLOCATE v_cursor_viviendaTemp
+UPDATE Distrito SET PoblacionHombres=0,PoblacionMujeres=0,ViviendasOcupadas=0,ViviendasDesocupadas=0,ViviendasColectivas=0 WHERE Nombre='ISLA DEL COCO';
+
+SELECT * from viviendasYpoblacion
+SELECT * FROM DISTRITO;
 
 
 -- Procedimiento que (una vez establecidos los distritos y zonas de riesgo) calcula la interseccion de ambas tablas
@@ -181,10 +185,6 @@ GO
 --DROP FUNCTION Normalizar_Nombre
 --Probarlo
 DECLARE @result VARCHAR(MAX)
-SET		@result = 'San Francisco de Dos Rios';
+SET		@result = 'San José Éstípulas';
 SET		@result = dbo.Normalizar_Nombre(@result);
 PRINT	@result;
-
-SELECT * FROM Canton
-SELECT * FROM viviendasYpoblacion
-SELECT * FROM Distrito
