@@ -142,6 +142,7 @@ FETCH NEXT FROM distritos_repetidos INTO @Coddist, @NDistrito
 WHILE( @@FETCH_STATUS = 0 )
 BEGIN
 	-- Ciclo anidado
+	SET @UnionGeo = null
 	Declare distritos_codigo cursor for
 		Select geom
 		From distritoTmp
@@ -254,7 +255,74 @@ From (Select distinct messec, clasificac, RIESGO
 Group by MESSEC, CLASIFICAC
 having count(*) > 1;
 
--- Ocupo el aggregate para unir las zonas por la llave
+
+-- Unir las Zonas Riesgo por llave
+Create table zonas_riesgoTmp2
+(
+	ID			int primary key,
+	MESSEC		int,
+	CLASIFICAC	nvarchar(255),
+	RIESGO		nvarchar(255),
+	geom		geometry
+);
+
+Declare @ID integer,
+		@MESSEC nvarchar(255),
+		@CLASIFICAC nvarchar(255),
+		@RIESGO nvarchar(255),
+		@RIESGO2 nvarchar(255),
+		@Geom geometry,
+		@UnionGeo geometry
+SET @ID = 1
+Declare zonas_repetidas cursor for
+	Select distinct MESSEC, CLASIFICAC
+	From zonas_riesgoTmp
+OPEN zonas_repetidas
+FETCH NEXT FROM zonas_repetidas INTO @MESSEC, @CLASIFICAC
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	-- Ciclo anidado
+	SET @UnionGeo = null
+	Declare zonas_llave cursor for
+		Select geom
+		From zonas_riesgoTmp
+		Where MESSEC = @MESSEC AND CLASIFICAC = @CLASIFICAC
+	OPEN zonas_llave
+	FETCH NEXT FROM zonas_llave INTO @Geom
+	WHILE( @@FETCH_STATUS = 0 )
+	BEGIN
+		SET @UnionGeo = @Geom.STUnion( @UnionGeo ) 
+		FETCH NEXT FROM zonas_llave INTO @Geom
+	END
+
+	-- Revisamos si rompe tercera forma normal
+	Declare v cursor for
+		Select DISTINCT RIESGO
+		From zonas_riesgoTmp
+		Where MESSEC = @MESSEC AND CLASIFICAC = @CLASIFICAC
+		Group by MESSEC, CLASIFICAC, RIESGO
+	OPEN v
+	FETCH FROM v into @RIESGO
+	FETCH NEXT FROM v into @RIESGO2
+	IF( @@FETCH_STATUS = 0 )
+		SET @RIESGO = 'BAJO-MEDIO'
+	CLOSE v
+	DEALLOCATE v
+	--
+
+	INSERT INTO zonas_riesgoTmp2 VALUES( @ID, @MESSEC, @CLASIFICAC, @RIESGO, @Geom )
+	CLOSE zonas_llave
+	DEALLOCATE zonas_llave
+	-- Fin ciclo anidado
+
+	SET @ID = @ID + 1
+	FETCH NEXT FROM zonas_repetidas INTO @MESSEC, @CLASIFICAC
+END
+CLOSE zonas_repetidas
+DEALLOCATE zonas_repetidas
+
+-- Ya estan agrupadas y cumplen la tercera forma normal propuesta
+Select * from zonas_riesgoTmp2;
 
 -- Ejecutar cuando el trigger que calcula las areas exista y los datos sean validos
 Insert into Zonas_Riesgo
