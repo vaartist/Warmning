@@ -49,44 +49,36 @@ AS
 	--Declarar variables para cursor
 	DECLARE @Nombre VARCHAR(25),
 			@Direccion VARCHAR(100),
-			@PerteneceA INTEGER,
 			@Geom geometry,
-			@CodigoD INTEGER,
-			@GeomD geometry
+			@CodigoD INTEGER
 	--Declararar el cursor
 	DECLARE cursor_tabla CURSOR FOR
-	SELECT	*
-	FROM INSERTED
+	SELECT Nombre, Direccion, Geom
+	FROM inserted
 	--Abrir cursor y usar FETCH
 	OPEN cursor_tabla
-	FETCH cursor_tabla INTO @Nombre, @Direccion, @PerteneceA, @Geom
+	FETCH NEXT FROM cursor_tabla INTO @Nombre, @Direccion, @Geom
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
 		--Revisar si la geometria es valida
 		IF( @Geom.STIsValid() = 1 AND @Geom.STGeometryType() = 'Point' )
 		BEGIN
 			--Buscamos al distrito que interseca la estacion
-			DECLARE cursor_distrito CURSOR FOR
-			Select Codigo, Geom
-			From Distrito
-			Where Geom.STIntersects(@Geom) = 1
-			OPEN cursor_distrito
-			FETCH cursor_distrito INTO @CodigoD, @GeomD
-			IF(@@FETCH_STATUS = 0)
+			SET @CodigoD = ( Select Codigo From Distrito Where Geom.STIntersects(@Geom) = 1 )
+			IF( @CodigoD is not null )
 				Insert into Estacion_Bomberos Values( @Nombre, @Direccion, @CodigoD, @Geom );
 			ELSE
 				Print 'ERROR: Estación de bomberos con el nombre ' + @Nombre + ' no pertenece a ningún distrito'
-			CLOSE cursor_distrito
 		END
 		ELSE
 			Print 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
-		FETCH NEXT FROM cursor_tabla INTO @Nombre, @Direccion, @PerteneceA, @Geom
+		FETCH NEXT FROM cursor_tabla INTO @Nombre, @Direccion, @Geom
 	END
 	--Cerrar cursor
 	CLOSE cursor_tabla
 	DEALLOCATE cursor_tabla
 --Fin de trigger
-
+Select * from Estacion_Bomberos;
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --Trigger para revisar la relacion topológica de cantón con provincia al insertar cantones

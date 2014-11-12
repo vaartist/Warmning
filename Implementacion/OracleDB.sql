@@ -52,8 +52,8 @@ CREATE TABLE Distrito(
 );
 /* Haremos trigger que calcule a que distrito pertenece la estacion_bomberos (la f.k)? */
 CREATE TABLE Estacion_Bomberos(
-	Nombre					VARCHAR(25),
-	Direccion				VARCHAR(100),
+	Nombre					VARCHAR(55),
+	Direccion				VARCHAR(120),
 	CodigoDistrito			INTEGER,
 	Geom					geometry,
 
