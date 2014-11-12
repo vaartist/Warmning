@@ -47,8 +47,8 @@ ON estacion_bomberos
 INSTEAD OF INSERT
 AS
 	--Declarar variables para cursor
-	DECLARE @Nombre VARCHAR(25),
-			@Direccion VARCHAR(100),
+	DECLARE @Nombre VARCHAR(55),
+			@Direccion VARCHAR(120),
 			@Geom geometry,
 			@CodigoD INTEGER
 	--Declararar el cursor
@@ -57,7 +57,7 @@ AS
 	FROM inserted
 	--Abrir cursor y usar FETCH
 	OPEN cursor_tabla
-	FETCH NEXT FROM cursor_tabla INTO @Nombre, @Direccion, @Geom
+	FETCH cursor_tabla INTO @Nombre, @Direccion, @Geom
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
 		--Revisar si la geometria es valida
@@ -66,7 +66,9 @@ AS
 			--Buscamos al distrito que interseca la estacion
 			SET @CodigoD = ( Select Codigo From Distrito Where Geom.STIntersects(@Geom) = 1 )
 			IF( @CodigoD is not null )
+			BEGIN
 				Insert into Estacion_Bomberos Values( @Nombre, @Direccion, @CodigoD, @Geom );
+			END
 			ELSE
 				Print 'ERROR: Estación de bomberos con el nombre ' + @Nombre + ' no pertenece a ningún distrito'
 		END

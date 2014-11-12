@@ -192,11 +192,15 @@ Insert into Estacion_Bomberos
 Select Nombre, Direccion, 0, geom From bomberosTmp;
 
 Insert into Unidades_Estacion_Bomberos
-Select Nombre, 'Extintoras', dbo.ParseNumber(Extintoras) From bomberosTmp;
+Select Nombre, 'Extintoras', dbo.ParseNumber(Extintoras) From bomberosTmp Where NOMBRE in ( Select Nombre from Estacion_Bomberos );
 Insert into Unidades_Estacion_Bomberos
-Select Nombre, 'Rescate', dbo.ParseNumber(Rescate) From bomberosTmp;
+Select Nombre, 'Rescate', dbo.ParseNumber(Rescate) From bomberosTmp Where NOMBRE in ( Select Nombre from Estacion_Bomberos );
 Insert into Unidades_Estacion_Bomberos
-Select Nombre, 'Forestales', dbo.ParseNumber(Forestales) From bomberosTmp;
+Select Nombre, 'Forestales', dbo.ParseNumber(Forestales) From bomberosTmp Where NOMBRE in ( Select Nombre from Estacion_Bomberos );
+
+-- No se pudo insertar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
+
+
 
 -- Limpieza de Zonas Riesgo
 -- Todas las geometrias son validas
