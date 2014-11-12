@@ -105,7 +105,7 @@ CREATE TABLE Cruza(
 );
 /* Trigger que revise que cantidad > 0*/
 CREATE TABLE Unidades_Estacion_Bomberos(
-	NombreEstacion			VARCHAR(25),
+	NombreEstacion			VARCHAR(55),
 	Tipo					VARCHAR(10),
 	Cantidad				INTEGER,
 
