@@ -79,7 +79,9 @@ Having count(*) > 1;
 -- Ejecutar cuando exista el trigger
 Insert into Canton
 Select codnum, ncanton, null, geom From cantonTmp;
-
+UPDATE Canton SET Nombre='VASQUEZ DE CORONADO' WHERE Nombre='VAZQUEZ DE CORONADO';
+UPDATE Canton SET Nombre='ZARCERO' WHERE Nombre='ALFARO RUIZ';
+UPDATE CANTON SET NOMBRE = dbo.Normalizar_Nombre(Nombre);
 
 
 -- Limpieza de Distrito
@@ -176,8 +178,26 @@ Having count(*) > 2;
 -- Ejecutar cuando exista el trigger y los distritos sean unicos
 Insert into Distrito
 Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp2;
-
-
+UPDATE Distrito SET Nombre='SAN FRANCISCO DE DOS RIOS' WHERE Nombre='SAN FCO. DE DOS RIOS';
+UPDATE Distrito SET Nombre='LA TRINIDAD' WHERE Nombre='TRINIDAD';
+UPDATE Distrito SET Nombre='EL GENERAL' WHERE Nombre='GENERAL';
+UPDATE Distrito SET Nombre='SAN ISIDRO DE EL GENERAL' WHERE Nombre='SAN ISIDRO DEL GENERAL';
+UPDATE Distrito SET Nombre='LA GRANJA' WHERE Nombre='GRANJA';
+UPDATE Distrito SET Nombre='EL ROSARIO' WHERE Nombre='ROSARIO';
+UPDATE Distrito SET Nombre='LA CEIBA' WHERE Nombre='CEIBA';
+UPDATE Distrito SET Nombre='SAN JOSECITO' WHERE Nombre='SAN JOCESITO';
+UPDATE Distrito SET Nombre='EL MASTATE' WHERE Nombre='MASTATE';
+UPDATE Distrito SET Nombre='BUENAVISTA' WHERE Nombre='BUENA VISTA';
+UPDATE Distrito SET Nombre='LA FORTUNA' WHERE Nombre='FORTUNA';
+UPDATE Distrito SET Nombre='LA PALMERA' WHERE Nombre='PALMERA';
+UPDATE Distrito SET Nombre='LA TIGRA' WHERE Nombre='TIGRA';
+UPDATE Distrito SET Nombre='LAS JUNTAS' WHERE Nombre='JUNTAS';
+UPDATE Distrito SET Nombre='LAS HORQUETAS' WHERE Nombre='HORQUETAS';
+UPDATE Distrito SET Nombre='EL TEJAR' WHERE Nombre='TEJAR';
+UPDATE Distrito SET Nombre='LA UNION' WHERE Nombre='UNION';
+UPDATE Distrito SET Nombre='EL CAIRO' WHERE Nombre='CAIRO';
+UPDATE Distrito SET Nombre='COLORADO' WHERE Nombre='COLORADO (CMD)';
+UPDATE Distrito SET NOMBRE = dbo.Normalizar_Nombre(Nombre);
 
 -- Limpieza de Bomberos
 -- No hay geometrias invalidas
@@ -268,5 +288,8 @@ CREATE TABLE caminoTmp2(
 DROP TABLE caminoTmp2;
 
 
-Select * from caminoTmp;
-
+-- Un problema en el archivo de viviendas y poblacion
+UPDATE viviendasYpoblacion SET Lugar = 'San José' WHERE Lugar='San José o Pizote';
+UPDATE viviendasYpoblacion SET Lugar = 'Aguacaliente' WHERE Lugar='Aguacaliente o San Francisco';
+UPDATE viviendasYpoblacion SET Lugar = 'Guadalupe' WHERE Lugar='Guadalupe o Arenilla';
+UPDATE viviendasYpoblacion SET Lugar = 'Puerto Carrillo' WHERE Lugar='Puente Carrillo';

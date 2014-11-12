@@ -72,9 +72,6 @@ END
 CLOSE v_cursor_viviendaTemp
 DEALLOCATE v_cursor_viviendaTemp
 
-SELECT * from viviendasYpoblacion
-SELECT * FROM DISTRITO;
-
 
 -- Procedimiento que (una vez establecidos los distritos y zonas de riesgo) calcula la interseccion de ambas tablas
 DECLARE @CodDistrito	INTEGER,
@@ -184,6 +181,10 @@ GO
 --DROP FUNCTION Normalizar_Nombre
 --Probarlo
 DECLARE @result VARCHAR(MAX)
-SET		@result = 'San José Éstípulas';
+SET		@result = 'San Francisco de Dos Rios';
 SET		@result = dbo.Normalizar_Nombre(@result);
 PRINT	@result;
+
+SELECT * FROM Canton
+SELECT * FROM viviendasYpoblacion
+SELECT * FROM Distrito
