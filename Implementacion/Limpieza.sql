@@ -177,7 +177,7 @@ Having count(*) > 2;
 Insert into Distrito
 Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp2;
 
-
+Select * from Distrito
 
 -- Limpieza de Bomberos
 -- No hay geometrias invalidas

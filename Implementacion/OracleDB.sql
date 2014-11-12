@@ -1,13 +1,15 @@
-DROP TABLE Provincia;
-DROP TABLE Canton;
-DROP TABLE Distrito;
-DROP TABLE Estacion_Bomberos;
-DROP TABLE Camino;
-DROP TABLE Zonas_Riesgo;
-DROP TABLE Interseca;
-DROP TABLE Cruza;
-DROP TABLE Unidades_Estacion_Bomberos;
 DROP TABLE Informacion_Carreteras_Canton;
+DROP TABLE Unidades_Estacion_Bomberos;
+DROP TABLE Estacion_Bomberos;
+DROP TABLE Interseca;
+DROP TABLE Zonas_Riesgo;
+DROP TABLE Distrito;
+DROP TABLE Cruza;
+DROP TABLE Camino;
+DROP TABLE Canton;
+DROP TABLE Provincia;
+
+
 
 /* Modificaciones a modelo relacional:
 	- Las geometrias se llaman Geom en todas las tablas

@@ -2,7 +2,7 @@
 --USE DW_user4
 
 /* Faltan:
-	-Triggers para revisar que las geometrias de las tablas sean del tipo necesario y validas x4
+	-Triggers para revisar que las geometrias de las tablas sean del tipo necesario y validas x2
 	-Trigger para revisar la relacion topologica de camino con canton, que calcula la longitud
 	-Trigger para revisar la relacion topologica de estacion_bomberos con distrito
 	-Trigger para revisar la relacion topologica de zonas_riesgo con distrito, que calcula el area
@@ -146,7 +146,7 @@ INSTEAD OF INSERT
 AS
 	--Declarar variables para cursor
 	DECLARE @Codigo						INTEGER,
-			@Nombre						VARCHAR(20),
+			@Nombre						VARCHAR(25),
 			@CodigoCanton				INTEGER,
 			@PoblacionHombres			INTEGER,
 			@PoblacionMujeres			INTEGER,
