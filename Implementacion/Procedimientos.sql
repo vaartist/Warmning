@@ -77,41 +77,6 @@ SELECT * from viviendasYpoblacion
 SELECT * FROM DISTRITO;
 
 
--- Procedimiento que (una vez establecidos los distritos y zonas de riesgo) calcula la interseccion de ambas tablas
-DECLARE @CodDistrito	INTEGER,
-	@GeomDistrito		geometry,
-	@MesesSecos			INTEGER,
-	@VelocidadViento	VARCHAR(10),
-	@GeomZR				geometry,
-	@Cobertura			FLOAT
-DECLARE v_cursor_interDistrit CURSOR FOR
-	SELECT Codigo,Geom FROM Distrito;
-DECLARE v_cursor_interZR CURSOR FOR
-	SELECT MesesSecos,VelocidadViento,Geom FROM Zonas_Riesgo;
-OPEN v_cursor_interDistrit
-FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
-WHILE @@FETCH_STATUS = 0
-BEGIN
-	OPEN v_cursor_interZR
-	FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
-	WHILE @@FETCH_STATUS = 0
-	BEGIN
-		IF @GeomDistrito.STIntersects(@GeomZR) != null
-		BEGIN
-			SET @Cobertura = @GeomDistrito.STIntersection(@GeomZR).STArea() / @GeomDistrito.STArea();
-			INSERT INTO Interseca VALUES (@CodDistrito,@MesesSecos,@VelocidadViento,@Cobertura);
-		END
-		FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
-	END
-	CLOSE v_cursor_interZR
-	FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
-END
-CLOSE v_cursor_interDistrit
-DEALLOCATE v_cursor_interDistrit
-DEALLOCATE v_cursor_interZR
-
-
-
 -- Procedimiento para importar datos de carreteras asfaltadas a Cantones
 DECLARE @CodCanton INTEGER,
 	@NombreCanton varchar(25),
@@ -188,3 +153,92 @@ DECLARE @result VARCHAR(MAX)
 SET		@result = 'San José Éstípulas';
 SET		@result = dbo.Normalizar_Nombre(@result);
 PRINT	@result;
+
+
+
+-- Unir rutas por su nombre de ruta
+Create Table caminoTmp2
+(
+	ID		integer primary key,
+	RUTA	nvarchar(255),
+	Tipo	nvarchar(255),
+	geom	geometry
+);
+
+-- Al unir los caminos con nombre quedan 2657 caminos con nombres distintos
+Declare @ID integer,
+		@RUTA nvarchar(255),
+		@TIPO nvarchar(255),
+		@Geom geometry,
+		@UnionGeo geometry
+SET @ID = 1
+Declare rutas_repetidas cursor for
+	Select distinct RUTA
+	From caminoTmp
+	WHERE RUTA != '' AND RUTA != 'ND' ORDER BY RUTA
+OPEN rutas_repetidas
+FETCH NEXT FROM rutas_repetidas INTO @RUTA
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	-- Ciclo anidado
+	SET @UnionGeo = null
+	Declare camino_nombre cursor for
+		Select TIPO, geom
+		From caminoTmp
+		Where RUTA = @RUTA
+	OPEN camino_nombre
+	FETCH NEXT FROM camino_nombre INTO @Tipo, @Geom
+	WHILE( @@FETCH_STATUS = 0 )
+	BEGIN
+		SET @UnionGeo = @Geom.STUnion( @UnionGeo ) 
+		FETCH NEXT FROM camino_nombre INTO @Tipo, @Geom
+	END
+	INSERT INTO caminoTmp2 VALUES( @ID, @RUTA, @Tipo, @Geom )
+	CLOSE camino_nombre
+	DEALLOCATE camino_nombre
+	-- Fin ciclo anidado
+
+	SET @ID = @ID + 1
+	FETCH NEXT FROM rutas_repetidas INTO @Ruta
+END
+CLOSE rutas_repetidas
+DEALLOCATE rutas_repetidas
+
+-- En total 100110 rutas sin nombre, las insertamos
+Declare @ID integer,
+		@TIPO nvarchar(255),
+		@Geom geometry,
+		@UnionGeo geometry
+SET @ID = (SELECT MAX(ID) + 1 FROM caminoTmp2)
+Declare rutas_ND cursor for
+	Select Tipo, Geom
+	From caminoTmp
+	Where RUTA = '' OR RUTA = 'ND'
+OPEN rutas_ND
+FETCH NEXT FROM rutas_ND INTO @TIPO, @GEOM
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	INSERT INTO caminoTmp2 Values( @ID, 'ND', @TIPO, @GEOM )
+	SET @ID = @ID + 1
+	FETCH NEXT FROM rutas_ND INTO @TIPO, @GEOM
+END
+CLOSE rutas_ND
+DEALLOCATE rutas_ND
+
+
+-- En total deberia ser 2657 + 100110 = 102767 caminos distintos
+Select * from caminoTmp2;
+
+-- Procedimiento para dar a los caminos sin nombre un nuevo nombre
+Declare @ID integer,
+		@RUTA nvarchar(255),
+		@Geom geometry,
+		@Cont int,
+Declare camino_nombrado cursor for
+	Select *
+	FROM caminoTmp
+	WHERE RUTA != '' AND RUTA != 'ND' ORDER BY RUTA
+
+
+
+Select * from caminoTmp WHERE RUTA != '' AND RUTA != 'ND' ORDER BY RUTA;

@@ -199,4 +199,41 @@ AS
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-select * from viviendasYpoblacion
+-- Trigger que al insertar zonas de riesgo calcula la interseccion
+DROP TRIGGER zonas_riesgo_insert;
+CREATE TRIGGER zonas_riesgo_insert
+ON Zonas_Riesgo
+AFTER INSERT
+AS
+	--Declarar variables para cursor
+DECLARE @CodDistrito	INTEGER,
+	@GeomDistrito		geometry,
+	@MesesSecos			INTEGER,
+	@VelocidadViento	VARCHAR(10),
+	@GeomZR				geometry,
+	@Cobertura			FLOAT
+DECLARE v_cursor_interDistrit CURSOR FOR
+	SELECT Codigo,Geom FROM Distrito;
+DECLARE v_cursor_interZR CURSOR FOR
+	SELECT MesesSecos,VelocidadViento,Geom FROM inserted;
+OPEN v_cursor_interDistrit
+FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
+WHILE (@@FETCH_STATUS = 0)
+BEGIN
+	OPEN v_cursor_interZR
+	FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
+	WHILE (@@FETCH_STATUS = 0)
+	BEGIN
+		IF (@GeomDistrito.STIntersects(@GeomZR) = 1)
+		BEGIN
+			SET @Cobertura = @GeomDistrito.STIntersection(@GeomZR).STArea()*100 / @GeomDistrito.STArea();
+			INSERT INTO Interseca VALUES (@CodDistrito,@MesesSecos,@VelocidadViento,@Cobertura);
+		END
+		FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
+	END
+	CLOSE v_cursor_interZR
+	FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
+END
+CLOSE v_cursor_interDistrit
+DEALLOCATE v_cursor_interDistrit
+DEALLOCATE v_cursor_interZR
