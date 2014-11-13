@@ -128,7 +128,7 @@ END
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
 --Procedimiento almacenado para pasar a mayúsculas y eliminar tildes
-CREATE FUNCTION Normalizar_Nombre
+CREATE FUNCTION dbo.Normalizar_Nombre
 (
 	@STRING		VARCHAR(MAX)
 )
@@ -154,7 +154,25 @@ SET		@result = 'San José Éstípulas';
 SET		@result = dbo.Normalizar_Nombre(@result);
 PRINT	@result;
 
-
+-- Eliminar caracteres alfabeticos del String
+CREATE FUNCTION dbo.Eliminar_Alfabeticos
+(
+	@string VARCHAR(8000)
+)
+RETURNS VARCHAR(8000)
+AS
+BEGIN
+	SET @string = SUBSTRING(@string,18,8000);
+	SET @string = SUBSTRING(@string,1,CHARINDEX(' M/SEC',@string)-1);
+	RETURN @string
+END
+GO
+-- DROP FUNCTION dbo.Eliminar_Alfabeticos
+-- Probarlo
+DECLARE @result VARCHAR(MAX)
+SET		@result = 'VELOCIDAD VIENTO 5-7 M/SEC';
+SET		@result = dbo.Eliminar_Alfabeticos(@result);
+PRINT	@result
 
 -- Unir rutas por su nombre de ruta
 Create Table caminoTmp2

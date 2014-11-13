@@ -226,8 +226,18 @@ BEGIN
 	BEGIN
 		IF (@GeomDistrito.STIntersects(@GeomZR) = 1)
 		BEGIN
-			SET @Cobertura = @GeomDistrito.STIntersection(@GeomZR).STArea()*100 / @GeomDistrito.STArea();
-			INSERT INTO Interseca VALUES (@CodDistrito,@MesesSecos,@VelocidadViento,@Cobertura);
+			SET @Cobertura = (@GeomDistrito.STIntersection(@GeomZR).STArea() / @GeomDistrito.STArea())*100;
+			IF( @Cobertura > 0)
+			BEGIN
+				IF( @Cobertura > 100 )
+				BEGIN
+					SET @Cobertura = 100;
+				END
+				IF( @Cobertura > 0.0001 )
+				BEGIN
+					INSERT INTO Interseca VALUES (@CodDistrito,@MesesSecos,@VelocidadViento,@Cobertura);
+				END
+			END
 		END
 		FETCH NEXT FROM v_cursor_interZR INTO @MesesSecos,@VelocidadViento,@GeomZR
 	END

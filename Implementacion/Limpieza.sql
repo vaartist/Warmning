@@ -324,9 +324,12 @@ DEALLOCATE zonas_repetidas
 -- Ya estan agrupadas y cumplen la tercera forma normal propuesta
 Select * from zonas_riesgoTmp2;
 
+-- Eliminar caracteres innecesarios
+UPDATE zonas_riesgoTmp2 SET CLASIFICAC = dbo.Eliminar_Alfabeticos(CLASIFICAC);
+
 -- Ejecutar cuando el trigger que calcula las areas exista y los datos sean validos
 Insert into Zonas_Riesgo
-Select messec, clasificac, riesgo from zonas_riesgoTmp;
+Select messec, clasificac,riesgo,geom from zonas_riesgoTmp2;
 
 
 
