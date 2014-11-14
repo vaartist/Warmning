@@ -21,6 +21,7 @@ BEGIN
 END
 GO
 --
+
 CREATE FUNCTION dbo.ParseNumber
 (
 	@string VARCHAR(8000)
