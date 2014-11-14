@@ -248,15 +248,45 @@ DEALLOCATE rutas_ND
 Select * from caminoTmp2;
 
 -- Procedimiento para dar a los caminos sin nombre un nuevo nombre
-Declare @ID integer,
-		@RUTA nvarchar(255),
-		@Geom geometry,
-		@Cont int,
-Declare camino_nombrado cursor for
-	Select *
-	FROM caminoTmp
-	WHERE RUTA != '' AND RUTA != 'ND' ORDER BY RUTA
+Declare @IDND			integer,
+		@TIPOND			nvarchar(MAX),
+		@RUTA			nvarchar(MAX),
+		@TIPO			nvarchar(MAX),
+		@Geom			geometry,
+		@Cont			int
+WHILE( Exists (Select Ruta From caminoTmp2 Where RUTA = 'ND') )
+BEGIN
+	Declare camino_nombrado cursor for
+		Select RUTA, Tipo, geom
+		FROM caminoTmp2
+		WHERE RUTA != 'ND' ORDER BY RUTA
+	OPEN camino_nombrado
+	FETCH FROM camino_nombrado INTO @RUTA, @Tipo, @Geom
+	WHILE( @@FETCH_STATUS = 0 )
+	BEGIN
+		SET @Cont = 1
+		-- Ciclo interno
+		Declare camino_nd cursor for
+			Select ID, TIPO
+			FROM caminoTmp2
+			WHERE RUTA = 'ND' AND geom.STIntersects(@Geom) = 1
+		OPEN camino_nd
+		FETCH FROM camino_nd INTO @IDND, @TIPOND
+		WHILE( @@FETCH_STATUS = 0 )
+		BEGIN
+			IF( @TIPOND is null )
+				SET @TIPOND = @TIPO
+			UPDATE caminoTmp2 SET RUTA = ( @RUTA + '-' + CAST(@Cont AS varchar(10)) ), Tipo = @TIPOND WHERE ID = @IDND
+			PRINT 'Cambiado nombre de ruta ND a ' + @RUTA + '-' + CAST(@Cont AS varchar(10))
+			SET @Cont = @Cont + 1
+			FETCH NEXT FROM camino_nd INTO @IDND, @TIPOND
+		END
+		CLOSE camino_nd
+		DEALLOCATE camino_nd
+		-- Fin ciclo interno
+		FETCH NEXT FROM camino_nombrado INTO @RUTA, @Tipo, @Geom
+	END
+	CLOSE camino_nombrado
+	DEALLOCATE camino_nombrado
+END
 
-
-
-Select * from caminoTmp WHERE RUTA != '' AND RUTA != 'ND' ORDER BY RUTA;
