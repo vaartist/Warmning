@@ -1,29 +1,29 @@
 use DW_user4;
 
--- Limpieza a Provincia
--- Obtenemos que Cartago, Guanacaste, Limon y Puntarenas tienen geometrias no validas
+--Limpieza a Provincia
+--Obtenemos que Cartago, Guanacaste, Limon y Puntarenas tienen geometrias no validas
 SELECT Provincia, geom.STIsValid()
 FROM provinciaTmp;
 
--- Remover la provincia con forma de cuadrado alrededor de la isla del Coco
+--Remover la provincia con forma de cuadrado alrededor de la isla del Coco
 Delete from provinciaTmp
 Where PROVINCIA = 'NA';
 
--- Validar
+--Validar
 UPDATE provinciaTmp
 SET geom = geometry::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
 WHERE geom.STIsValid() = 0;
--- Ahora todas son validas
+--Ahora todas son validas
 
--- Cerrar geometrias
+--Cerrar geometrias
 UPDATE provinciaTmp
 SET geom = geometry::STGeomFromWKB(geom.STUnion(geom.STStartPoint()).STAsBinary(), geom.STSrid);
 
--- Smoothing
+--Smoothing
 UPDATE provinciaTmp
 SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
 
--- Remover puntos de mas
+--Remover puntos de mas
 UPDATE provinciaTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
@@ -33,7 +33,7 @@ Select P1.Provincia, P2.Provincia
 From provinciaTmp P1, provinciaTmp P2
 Where P1.geom.STIntersects(P2.geom) = 1 AND P1.COD_PROV < P2.COD_PROV;
 
--- Importar
+--Importar
 Insert into Provincia
 Select COD_PROV, PROVINCIA, geom From provinciaTmp;
 
@@ -41,27 +41,27 @@ Select * from Provincia;
 
 
 
--- Limpieza a Canton
--- 5 Cantones con geometrias invalidas
+--Limpieza a Canton
+--5 Cantones con geometrias invalidas
 SELECT NCANTON, geom.STIsValid()
 FROM cantonTmp
 Where geom.STIsValid() = 0;
 
--- Validar
+--Validar
 UPDATE cantonTmp
 SET geom = geometry::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
 WHERE geom.STIsValid() = 0;
--- Ahora todas son validas
+--Ahora todas son validas
 
--- Cerrar geometrias
+--Cerrar geometrias
 UPDATE cantonTmp
 SET geom = geometry::STGeomFromWKB(geom.STUnion(geom.STStartPoint()).STAsBinary(), geom.STSrid);
 
--- Smoothing
+--Smoothing
 UPDATE cantonTmp
 SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
 
--- Remover puntos de mas
+--Remover puntos de mas
 UPDATE cantonTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
@@ -70,13 +70,13 @@ Where NCANTON = 'NA';
 
 Select * from cantonTmp;
 
--- Sin embargo, hay 62 cantones que intersecan con mas de una provincia...
+--Sin embargo, hay 62 cantones que intersecan con mas de una provincia...
 Select NCANTON
 From cantonTmp C join provinciaTmp P on C.geom.STIntersects(P.geom) = 1
 Group by NCANTON
 Having count(*) > 1;
 
--- Ejecutar cuando exista el trigger
+--Ejecutar cuando exista el trigger
 Insert into Canton
 Select codnum, ncanton, null, geom From cantonTmp;
 UPDATE Canton SET Nombre='VASQUEZ DE CORONADO' WHERE Nombre='VAZQUEZ DE CORONADO';
@@ -84,27 +84,27 @@ UPDATE Canton SET Nombre='ZARCERO' WHERE Nombre='ALFARO RUIZ';
 UPDATE CANTON SET NOMBRE = dbo.Normalizar_Nombre(Nombre);
 
 
--- Limpieza de Distrito
--- 4 geometrias invalidas
+--Limpieza de Distrito
+--4 geometrias invalidas
 SELECT NDISTRITO, geom.STIsValid()
 FROM distritoTmp
 Where geom.STIsValid() = 0;
 
--- Validar
+--Validar
 UPDATE distritoTmp
 SET geom = geometry::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
 WHERE geom.STIsValid() = 0;
--- Ahora todas son validas
+--Ahora todas son validas
 
--- Cerrar geometrias
+--Cerrar geometrias
 UPDATE distritoTmp
 SET geom = geometry::STGeomFromWKB(geom.STUnion(geom.STStartPoint()).STAsBinary(), geom.STSrid);
 
--- Smoothing
+--Smoothing
 UPDATE distritoTmp
 SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
 
--- Remover puntos de mas
+--Remover puntos de mas
 UPDATE distritoTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
@@ -113,13 +113,13 @@ Select * from distritoTmp;
 Delete from distritoTmp
 Where NDISTRITO = 'NA';
 
--- Ocurre que hay distritos que no son unicos...
+--Ocurre que hay distritos que no son unicos...
 Select CODDIST
 From distritoTmp
 Group by CODDIST
 Having count(*) > 2;
 
--- Para exportar a la tabla distrito hay que hacer union de geometrias mediante coddist
+--Para exportar a la tabla distrito hay que hacer union de geometrias mediante coddist
 Create Table distritoTmp2
 (
 	ID			int primary key,
@@ -141,7 +141,7 @@ OPEN distritos_repetidos
 FETCH NEXT FROM distritos_repetidos INTO @Coddist, @NDistrito
 WHILE( @@FETCH_STATUS = 0 )
 BEGIN
-	-- Ciclo anidado
+	--Ciclo anidado
 	SET @UnionGeo = null
 	Declare distritos_codigo cursor for
 		Select geom
@@ -157,7 +157,7 @@ BEGIN
 	INSERT INTO distritoTmp2 VALUES( @ID, @NDistrito, @Coddist, @Geom )
 	CLOSE distritos_codigo
 	DEALLOCATE distritos_codigo
-	-- Fin ciclo anidado
+	--Fin ciclo anidado
 
 	SET @ID = @ID + 1
 	FETCH NEXT FROM distritos_repetidos INTO @Coddist, @NDistrito
@@ -170,13 +170,13 @@ Delete from distritoTmp2;
 
 Drop Table distritoTmp2;
 
--- ¡Ya son unicos!
+--¡Ya son unicos!
 Select CODDIST
 From distritoTmp2
 Group by CODDIST
 Having count(*) > 2;
 
--- Ejecutar cuando exista el trigger y los distritos sean unicos
+--Ejecutar cuando exista el trigger y los distritos sean unicos
 Insert into Distrito
 Select CODDIST, NDISTRITO, null, null, null, null, null, null, geom From distritoTmp2;
 
@@ -205,15 +205,15 @@ UPDATE Distrito SET Nombre='LA ASUNCION' WHERE Nombre='ASUNCION';
 UPDATE Distrito SET Nombre='VALLE LA ESTRELLA' WHERE Nombre='VALLE DE LA ESTRELLA';
 UPDATE Distrito SET NOMBRE = LTRIM(RTRIM(dbo.Normalizar_Nombre(Nombre)));
 
--- Limpieza de Bomberos
--- No hay geometrias invalidas
+--Limpieza de Bomberos
+--No hay geometrias invalidas
 SELECT NOMBRE, geom.STIsValid()
 FROM bomberosTmp
 Where geom.STIsValid() = 0;
 
 Select * from bomberosTmp;
 
--- Ejecutar cuando exista el trigger
+--Ejecutar cuando exista el trigger
 Insert into Estacion_Bomberos
 Select Nombre, Direccion, 0, geom From bomberosTmp;
 
@@ -224,31 +224,31 @@ Select Nombre, 'Rescate', dbo.ParseNumber(Rescate) From bomberosTmp Where NOMBRE
 Insert into Unidades_Estacion_Bomberos
 Select Nombre, 'Forestales', dbo.ParseNumber(Forestales) From bomberosTmp Where NOMBRE in ( Select Nombre from Estacion_Bomberos );
 
--- No se pudo insertar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
+--No se pudo insertar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
 
 
 
--- Limpieza de Zonas Riesgo
--- Todas las geometrias son validas
+--Limpieza de Zonas Riesgo
+--Todas las geometrias son validas
 SELECT CLASIFICAC, RIESGO, MESSEC, geom.STIsValid()
 FROM zonas_riesgoTmp
 Where geom.STIsValid() = 0;
 
--- Cerrar geometrias
+--Cerrar geometrias
 UPDATE zonas_riesgoTmp
 SET geom = geometry::STGeomFromWKB(geom.STUnion(geom.STStartPoint()).STAsBinary(), geom.STSrid);
 
--- Smoothing
+--Smoothing
 UPDATE zonas_riesgoTmp
 SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
 
--- Remover puntos de mas
+--Remover puntos de mas
 UPDATE zonas_riesgoTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
 Select * from zonas_riesgoTmp;
 
--- Hay 2 que no cumplen la tercera forma normal como se propuso
+--Hay 2 que no cumplen la tercera forma normal como se propuso
 Select grupo.messec, grupo.clasificac
 From (Select distinct messec, clasificac, RIESGO
 		From zonas_riesgoTmp) grupo
@@ -256,7 +256,7 @@ Group by MESSEC, CLASIFICAC
 having count(*) > 1;
 
 
--- Unir las Zonas Riesgo por llave
+--Unir las Zonas Riesgo por llave
 Create table zonas_riesgoTmp2
 (
 	ID			int primary key,
@@ -281,7 +281,7 @@ OPEN zonas_repetidas
 FETCH NEXT FROM zonas_repetidas INTO @MESSEC, @CLASIFICAC
 WHILE( @@FETCH_STATUS = 0 )
 BEGIN
-	-- Ciclo anidado
+	--Ciclo anidado
 	SET @UnionGeo = null
 	Declare zonas_llave cursor for
 		Select geom
@@ -295,7 +295,7 @@ BEGIN
 		FETCH NEXT FROM zonas_llave INTO @Geom
 	END
 
-	-- Revisamos si rompe tercera forma normal
+	--Revisamos si rompe tercera forma normal
 	Declare v cursor for
 		Select DISTINCT RIESGO
 		From zonas_riesgoTmp
@@ -313,7 +313,7 @@ BEGIN
 	INSERT INTO zonas_riesgoTmp2 VALUES( @ID, @MESSEC, @CLASIFICAC, @RIESGO, @Geom )
 	CLOSE zonas_llave
 	DEALLOCATE zonas_llave
-	-- Fin ciclo anidado
+	--Fin ciclo anidado
 
 	SET @ID = @ID + 1
 	FETCH NEXT FROM zonas_repetidas INTO @MESSEC, @CLASIFICAC
@@ -321,39 +321,39 @@ END
 CLOSE zonas_repetidas
 DEALLOCATE zonas_repetidas
 
--- Ya estan agrupadas y cumplen la tercera forma normal propuesta
+--Ya estan agrupadas y cumplen la tercera forma normal propuesta
 Select * from zonas_riesgoTmp2;
 
--- Eliminar caracteres innecesarios
+--Eliminar caracteres innecesarios
 UPDATE zonas_riesgoTmp2 SET CLASIFICAC = dbo.Eliminar_Alfabeticos(CLASIFICAC);
 
--- Ejecutar cuando el trigger que calcula las areas exista y los datos sean validos
+--Ejecutar cuando el trigger que calcula las areas exista y los datos sean validos
 Insert into Zonas_Riesgo
 Select messec, clasificac,riesgo,geom from zonas_riesgoTmp2;
 
 
 
--- Limpieza de Caminos
--- 20 geometrias invalidas
+--Limpieza de Caminos
+--20 geometrias invalidas
 SELECT Ruta, geom.STIsValid()
 FROM caminoTmp
 Where geom.STIsValid() = 0;
 
--- Validar
+--Validar
 UPDATE caminoTmp
 SET geom = geometry::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
 WHERE geom.STIsValid() = 0;
--- Ahora todas son validas
+--Ahora todas son validas
 
--- Smoothing
+--Smoothing
 UPDATE caminoTmp
 SET geom = geometry::STGeomFromWKB(geom.STBuffer(0.00001).STBuffer(-0.00001).STAsBinary(), geom.STSrid);
 
--- Remover puntos de mas
+--Remover puntos de mas
 UPDATE caminoTmp
 SET geom = geometry::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSrid);
 
--- Unir caminos con mismo nombre
+--Unir caminos con mismo nombre
 CREATE TABLE caminoTmp2(
 	id INT,
 	Ruta VARCHAR(255),
@@ -364,7 +364,7 @@ CREATE TABLE caminoTmp2(
 DROP TABLE caminoTmp2;
 
 
--- Un problema en el archivo de viviendas y poblacion
+--Un problema en el archivo de viviendas y poblacion
 UPDATE viviendasYpoblacion SET Lugar = 'San José' WHERE Lugar='San José o Pizote';
 UPDATE viviendasYpoblacion SET Lugar = 'Aguacaliente' WHERE Lugar='Aguacaliente o San Francisco';
 UPDATE viviendasYpoblacion SET Lugar = 'Guadalupe' WHERE Lugar='Guadalupe o Arenilla';
