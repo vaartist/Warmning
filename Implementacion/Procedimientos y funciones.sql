@@ -1,7 +1,7 @@
 --Procedimientos almacenados.
 USE DW_user4;
 
---Procedimiento almacenado para obtener numeros de un string
+--Función para obtener numeros de un string
 CREATE FUNCTION dbo.ParseNumericChars
 (
 	@string VARCHAR(8000)
@@ -20,6 +20,7 @@ BEGIN
 	RETURN @string
 END
 GO
+--
 
 CREATE FUNCTION dbo.ParseNumber
 (
@@ -32,9 +33,9 @@ BEGIN
 	RETURN ISNULL(Cast(@string as int),0)
 END
 GO
+--
 
-
--- Procedimiento para insertar los datos de viviendas y poblacion a distrito
+--Procedimiento para insertar los datos de viviendas y poblacion a distrito
 DECLARE
 	@Canton VARCHAR(20),
 	@FK_Canton INTEGER,
@@ -72,12 +73,12 @@ END
 CLOSE v_cursor_viviendaTemp
 DEALLOCATE v_cursor_viviendaTemp
 UPDATE Distrito SET PoblacionHombres=0,PoblacionMujeres=0,ViviendasOcupadas=0,ViviendasDesocupadas=0,ViviendasColectivas=0 WHERE Nombre='ISLA DEL COCO';
-
+--
 SELECT * from viviendasYpoblacion
 SELECT * FROM DISTRITO;
+--
 
-
--- Procedimiento para importar datos de carreteras asfaltadas a Cantones
+--Procedimiento para importar datos de carreteras asfaltadas a Cantones
 DECLARE @CodCanton INTEGER,
 	@NombreCanton varchar(25),
 	@Kilometros FLOAT
@@ -93,8 +94,9 @@ BEGIN
 END
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
+--
 
--- Procedimiento para importar datos de carreteras de concreto a Cantones
+--Procedimiento para importar datos de carreteras de concreto a Cantones
 DECLARE @CodCanton INTEGER,
 	@NombreCanton varchar(25),
 	@Kilometros FLOAT
@@ -110,8 +112,9 @@ BEGIN
 END
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
+--
 
--- Procedimiento para importar datos de carreteras de lastre a Cantones
+--Procedimiento para importar datos de carreteras de lastre a Cantones
 DECLARE @CodCanton INTEGER,
 	@NombreCanton varchar(25),
 	@Kilometros FLOAT
@@ -127,7 +130,9 @@ BEGIN
 END
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
---Procedimiento almacenado para pasar a mayúsculas y eliminar tildes
+--
+
+--Función para pasar a mayúsculas y eliminar tildes
 CREATE FUNCTION dbo.Normalizar_Nombre
 (
 	@STRING		VARCHAR(MAX)
@@ -153,8 +158,9 @@ DECLARE @result VARCHAR(MAX)
 SET		@result = 'San José Éstípulas';
 SET		@result = dbo.Normalizar_Nombre(@result);
 PRINT	@result;
+--
 
--- Eliminar caracteres alfabeticos del String
+--Eliminar caracteres alfabeticos del String
 CREATE FUNCTION dbo.Eliminar_Alfabeticos
 (
 	@string VARCHAR(8000)
@@ -167,14 +173,15 @@ BEGIN
 	RETURN @string
 END
 GO
--- DROP FUNCTION dbo.Eliminar_Alfabeticos
--- Probarlo
+--DROP FUNCTION dbo.Eliminar_Alfabeticos
+--Probarlo
 DECLARE @result VARCHAR(MAX)
 SET		@result = 'VELOCIDAD VIENTO 5-7 M/SEC';
 SET		@result = dbo.Eliminar_Alfabeticos(@result);
 PRINT	@result
+--
 
--- Unir rutas por su nombre de ruta
+--Unir rutas por su nombre de ruta
 Create Table caminoTmp2
 (
 	ID		integer primary key,
@@ -182,8 +189,9 @@ Create Table caminoTmp2
 	Tipo	nvarchar(255),
 	geom	geometry
 );
+--
 
--- Al unir los caminos con nombre quedan 2657 caminos con nombres distintos
+--Al unir los caminos con nombre quedan 2657 caminos con nombres distintos
 Declare @ID integer,
 		@RUTA nvarchar(255),
 		@TIPO nvarchar(255),
@@ -198,7 +206,7 @@ OPEN rutas_repetidas
 FETCH NEXT FROM rutas_repetidas INTO @RUTA
 WHILE( @@FETCH_STATUS = 0 )
 BEGIN
-	-- Ciclo anidado
+	--Ciclo anidado
 	SET @UnionGeo = null
 	Declare camino_nombre cursor for
 		Select TIPO, geom
@@ -214,15 +222,16 @@ BEGIN
 	INSERT INTO caminoTmp2 VALUES( @ID, @RUTA, @Tipo, @Geom )
 	CLOSE camino_nombre
 	DEALLOCATE camino_nombre
-	-- Fin ciclo anidado
+	--Fin ciclo anidado
 
 	SET @ID = @ID + 1
 	FETCH NEXT FROM rutas_repetidas INTO @Ruta
 END
 CLOSE rutas_repetidas
 DEALLOCATE rutas_repetidas
+--
 
--- En total 100110 rutas sin nombre, las insertamos
+--En total 100110 rutas sin nombre, las insertamos
 Declare @ID integer,
 		@TIPO nvarchar(255),
 		@Geom geometry,
@@ -242,9 +251,10 @@ BEGIN
 END
 CLOSE rutas_ND
 DEALLOCATE rutas_ND
+--
 
 
--- En total deberia ser 2657 + 100110 = 102767 caminos distintos
+--En total deberia ser 2657 + 100110 = 102767 caminos distintos
 Select * from caminoTmp2;
 
 -- Procedimiento para dar a los caminos sin nombre un nuevo nombre
@@ -266,7 +276,7 @@ BEGIN
 	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
 		SET @Cont = 1
-		-- Ciclo interno
+		--Ciclo interno
 		Declare camino_nd cursor for
 			Select ID, TIPO
 			FROM caminoTmp2
@@ -284,12 +294,13 @@ BEGIN
 		END
 		CLOSE camino_nd
 		DEALLOCATE camino_nd
-		-- Fin ciclo interno
+		--Fin ciclo interno
 		FETCH NEXT FROM camino_nombrado INTO @RUTA, @Tipo, @Geom
 	END
 	CLOSE camino_nombrado
 	DEALLOCATE camino_nombrado
 END
+--
 
 
 -- Insertamos los caminos cuyo nombre es aceptable

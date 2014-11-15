@@ -2,22 +2,22 @@
 --USE DW_user4
 
 /* Faltan:
-	-Triggers para revisar que las geometrias de las tablas sean del tipo necesario y validas x2
-	-Trigger para revisar la relacion topologica de camino con canton, que calcula la longitud
-	-Trigger para revisar la relacion topologica de estacion_bomberos con distrito
-	-Trigger para revisar la relacion topologica de zonas_riesgo con distrito, que calcula el area
+	-Triggers para revisar que las geometrías de las tablas sean del tipo necesario y válidas x2
+	-Trigger para revisar la relacion topológica de camino con canton, que calcula la longitud
+	-Trigger para revisar la relacion topológica de estacion_bomberos con distrito
+	-Trigger para revisar la relacion topológica de zonas_riesgo con distrito, que calcula el area
 */
 
---Trigger para revisar que la geometria de provincia es valida
-DROP TRIGGER provincia_insert;
-CREATE TRIGGER provincia_insert
+--Trigger para revisar que la geometría de provincia es válida
+DROP TRIGGER provincia_INSERT;
+CREATE TRIGGER provincia_INSERT
 ON provincia
 INSTEAD OF INSERT
 AS
 	--Declarar variables para cursor
 	DECLARE @Codigo INTEGER,
 			@Nombre VARCHAR(10),
-			@Geom geometry
+			@Geom GEOMETRY
 	--Declararar el cursor
 	DECLARE cursor_tabla CURSOR FOR
 	SELECT	*
@@ -28,9 +28,9 @@ AS
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
 		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() = 'Polygon' OR @Geom.STGeometryType() = 'MultiPolygon') )
-			Insert into Provincia Values( @Codigo, @Nombre, @Geom );
-		Else
-			Print 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
+			INSERT INTO Provincia VALUES( @Codigo, @Nombre, @Geom );
+		ELSE
+			PRINT 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
 		FETCH NEXT FROM cursor_tabla INTO @Codigo, @Nombre, @Geom
 	END
 	--Cerrar cursor
@@ -40,9 +40,9 @@ AS
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---Trigger para revisar que la geometria de bomberos es valida, y su relacion topologica con distrito
-DROP TRIGGER bomberos_insert;
-CREATE TRIGGER bomberos_insert
+--Trigger para revisar que la geometría de bomberos es válida, y su relacion topológica con distrito
+DROP TRIGGER bomberos_INSERT;
+CREATE TRIGGER bomberos_INSERT
 ON estacion_bomberos
 INSTEAD OF INSERT
 AS
@@ -54,38 +54,39 @@ AS
 	--Declararar el cursor
 	DECLARE cursor_tabla CURSOR FOR
 	SELECT Nombre, Direccion, Geom
-	FROM inserted
+	FROM INSERTed
 	--Abrir cursor y usar FETCH
 	OPEN cursor_tabla
 	FETCH cursor_tabla INTO @Nombre, @Direccion, @Geom
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
-		--Revisar si la geometria es valida
+		--Revisar si la geometría es válida
 		IF( @Geom.STIsValid() = 1 AND @Geom.STGeometryType() = 'Point' )
 		BEGIN
 			--Buscamos al distrito que interseca la estacion
-			SET @CodigoD = ( Select Codigo From Distrito Where Geom.STIntersects(@Geom) = 1 )
+			SET @CodigoD = ( SELECT Codigo FROM Distrito Where Geom.STIntersects(@Geom) = 1 )
 			IF( @CodigoD is not null )
 			BEGIN
-				Insert into Estacion_Bomberos Values( @Nombre, @Direccion, @CodigoD, @Geom );
+				INSERT INTO Estacion_Bomberos VALUES( @Nombre, @Direccion, @CodigoD, @Geom );
 			END
 			ELSE
-				Print 'ERROR: Estación de bomberos con el nombre ' + @Nombre + ' no pertenece a ningún distrito'
+				PRINT 'ERROR: Estación de bomberos con el nombre ' + @Nombre + ' no pertenece a ningún distrito'
 		END
 		ELSE
-			Print 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
+			PRINT 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
 		FETCH NEXT FROM cursor_tabla INTO @Nombre, @Direccion, @Geom
 	END
 	--Cerrar cursor
 	CLOSE cursor_tabla
 	DEALLOCATE cursor_tabla
 --Fin de trigger
-Select * from Estacion_Bomberos;
+SELECT * FROM Estacion_Bomberos;
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---Trigger para revisar la relacion topológica de cantón con provincia al insertar cantones
-DROP TRIGGER cantones_insert;
-CREATE TRIGGER cantones_insert
+--Trigger para revisar la relacion topológica de cantón con provincia al INSERTar cantones
+DROP TRIGGER cantones_INSERT;
+CREATE TRIGGER cantones_INSERT
 ON Canton
 INSTEAD OF INSERT
 AS
@@ -95,7 +96,7 @@ AS
 			@CodigoProvincia			INTEGER,
 			@Geom						GEOMETRY,
 			@CodigoProvinciaCorrecta	INTEGER
-	--Declararar el cursor principal, hecho para iterar por todas las tuplas que se están insertando en la tabla de cantones.
+	--Declararar el cursor principal, hecho para iterar por todas las tuplas que se están INSERTando en la tabla de cantones.
 	DECLARE cursor_tabla CURSOR FOR
 	SELECT	*
 	FROM INSERTED
@@ -117,16 +118,16 @@ AS
 			--Se usa el cursor interno para obtener el código de la provincia correspondiente al cantón
 			OPEN cursor_tabla_interna
 			FETCH cursor_tabla_interna INTO @CodigoProvinciaCorrecta
-			--Se usa ese código para insertar el cantón de una vez
+			--Se usa ese código para INSERTar el cantón de una vez
 			INSERT INTO Canton
 			VALUES(@Codigo, @Nombre, @CodigoProvinciaCorrecta, @Geom)
-			--OPCIONAL, avisarle al usuario la provincia a la que se está asociando el cantón, en caso de que especificara una errónea se dará cuenta de la correción
-			--Print 'El cantón fue asociado a la provincia ' + (SELECT Nombre FROM Provincia WHERE Codigo=@CodigoProvinciaCorrecta)
+			--OPCIONAL, avisarle al usuario la provincia a la que se está asociando el cantón, en caso de que especIFicara una errónea se dará cuenta de la correción
+			--PRINT 'El cantón fue asociado a la provincia ' + (SELECT Nombre FROM Provincia WHERE Codigo=@CodigoProvinciaCorrecta)
 			CLOSE cursor_tabla_interna
 			DEALLOCATE cursor_tabla_interna
 		END
 		ELSE
-			Print 'ERROR: Geometría no valida para provincia con nombre ' + @Nombre
+			PRINT 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
 		FETCH NEXT FROM cursor_tabla INTO @Codigo, @Nombre, @CodigoProvincia, @Geom
 	END
 	--Cerrar cursor
@@ -138,9 +139,9 @@ AS
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---Trigger para revisar la relacion topologica de distrito con canton
-DROP TRIGGER distritos_insert;
-CREATE TRIGGER distritos_insert
+--Trigger para revisar la relacion topológica de distrito con canton
+DROP TRIGGER distritos_INSERT;
+CREATE TRIGGER distritos_INSERT
 ON Distrito
 INSTEAD OF INSERT
 AS
@@ -155,7 +156,7 @@ AS
 			@ViviendasColectivas		INTEGER,
 			@Geom						GEOMETRY,
 			@CodigoDistritoCorrecto		INTEGER
-	--Declararar el cursor principal, hecho para iterar por todas las tuplas que se están insertando en la tabla de cantones.
+	--Declararar el cursor principal, hecho para iterar por todas las tuplas que se están INSERTando en la tabla de cantones.
 	DECLARE cursor_tabla CURSOR FOR
 	SELECT	*
 	FROM INSERTED
@@ -177,16 +178,16 @@ AS
 			--Se usa el cursor interno para obtener el código de la provincia correspondiente al cantón
 			OPEN cursor_tabla_interna
 			FETCH cursor_tabla_interna INTO @CodigoDistritoCorrecto
-			--Se usa ese código para insertar el cantón de una vez
+			--Se usa ese código para INSERTar el cantón de una vez
 			INSERT INTO Distrito
 			VALUES(@Codigo, @Nombre, @CodigoDistritoCorrecto, @PoblacionHombres, @PoblacionMujeres, @ViviendasOcupadas, @ViviendasDesocupadas, @ViviendasColectivas, @Geom)
-			--OPCIONAL, avisarle al usuario la provincia a la que se está asociando el cantón, en caso de que especificara una errónea se dará cuenta de la correción
-			--Print 'El cantón fue asociado a la provincia ' + (SELECT Nombre FROM Provincia WHERE Codigo=@CodigoDistritoCorrecto)
+			--OPCIONAL, avisarle al usuario la provincia a la que se está asociando el cantón, en caso de que especIFicara una errónea se dará cuenta de la correción
+			--PRINT 'El cantón fue asociado a la provincia ' + (SELECT Nombre FROM Provincia WHERE Codigo=@CodigoDistritoCorrecto)
 			CLOSE cursor_tabla_interna
 			DEALLOCATE cursor_tabla_interna
 		END
 		ELSE
-			Print 'ERROR: Geometría no valida para provincia con nombre ' + @Nombre
+			PRINT 'ERROR: Geometría no válida para provincia con nombre ' + @Nombre
 		FETCH NEXT FROM cursor_tabla INTO @Codigo, @Nombre, @CodigoCanton, @PoblacionHombres, @PoblacionMujeres, @ViviendasOcupadas, @ViviendasDesocupadas, @ViviendasColectivas, @Geom
 	END
 	--Cerrar cursor
@@ -196,12 +197,11 @@ AS
 --DELETE FROM Distrito
 --SELECT * FROM Distrito
 
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- Trigger que al insertar zonas de riesgo calcula la interseccion
-DROP TRIGGER zonas_riesgo_insert;
-CREATE TRIGGER zonas_riesgo_insert
+-- Trigger que al INSERTar zonas de riesgo calcula la interseccion
+DROP TRIGGER zonas_riesgo_INSERT;
+CREATE TRIGGER zonas_riesgo_INSERT
 ON Zonas_Riesgo
 AFTER INSERT
 AS
@@ -215,7 +215,7 @@ DECLARE @CodDistrito	INTEGER,
 DECLARE v_cursor_interDistrit CURSOR FOR
 	SELECT Codigo,Geom FROM Distrito;
 DECLARE v_cursor_interZR CURSOR FOR
-	SELECT MesesSecos,VelocidadViento,Geom FROM inserted;
+	SELECT MesesSecos,VelocidadViento,Geom FROM INSERTed;
 OPEN v_cursor_interDistrit
 FETCH NEXT FROM v_cursor_interDistrit INTO @CodDistrito,@GeomDistrito
 WHILE (@@FETCH_STATUS = 0)
