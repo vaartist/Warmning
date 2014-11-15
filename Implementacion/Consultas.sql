@@ -102,7 +102,7 @@ SET			@Estacion = (SELECT Geom FROM Estacion_Bomberos WHERE Nombre='BOMBEROS JUA
 --SET			@Localizacion = (SELECT Geom FROM Estacion_Bomberos WHERE Nombre='CENTRAL BOMBEROS CARTAGO')
 --SET			@Localizacion = (SELECT Geom FROM Estacion_Bomberos WHERE Nombre='CENTRAL BOMBEROS OROTINA')
 --Primero hay que determinar un radio de influencia apropiado, por ejemplo 10 KILOmetros
-SET			@Radio = 10000
+SET			@Radio = 20000
 --Luego hay que obtener el área alrededor, o un "buffer"
 SELECT		@Estacion.STBuffer(@Radio)
 --Fin de consulta
@@ -116,7 +116,7 @@ DECLARE		@AreasInfluencia	GEOMETRY,
 			@Radio				INT,
 			@AreaTotal			GEOMETRY,
 			@AreasRiesgo		GEOMETRY
-SET			@Radio = 10000
+SET			@Radio = 20000
 --Primero se usa un cursor para iterar por la tabla de estaciones de bomberos e ir uniendo las geometrías de las áreas de influencia de cada una
 DECLARE		Cursor_Estaciones	CURSOR FOR
 			SELECT				Geom

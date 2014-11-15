@@ -83,7 +83,7 @@ WHERE NCANTON = 'NA';
 SELECT * FROM cantonTmp;
 --
 
---Sin embargo, hay 62 cantones que INTersecan con mas de una provincia...
+--Sin embargo, hay 62 cantones que intersecan con más de una provincia...
 SELECT NCANTON
 FROM cantonTmp C join provinciaTmp P on C.geom.STIntersects(P.geom) = 1
 GROUP BY NCANTON
@@ -244,12 +244,12 @@ INSERT INTO Estacion_Bomberos
 SELECT Nombre, Direccion, 0, GEOM FROM bomberosTmp;
 
 INSERT INTO Unidades_Estacion_Bomberos
-SELECT Nombre, 'ExtINTOras', dbo.ParseNumber(ExtINTOras) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
+SELECT Nombre, 'Extintoras', dbo.ParseNumber(Extintoras) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
 INSERT INTO Unidades_Estacion_Bomberos
 SELECT Nombre, 'Rescate', dbo.ParseNumber(Rescate) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
 INSERT INTO Unidades_Estacion_Bomberos
-SELECT Nombre, 'FORestales', dbo.ParseNumber(FORestales) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
---No se pudo INSERTar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
+SELECT Nombre, 'Forestales', dbo.ParseNumber(Forestales) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
+--No se pudo insertar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
 --
 
 
@@ -278,7 +278,7 @@ SET GEOM = GEOMETRY::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSri
 SELECT * FROM zonas_riesgoTmp;
 --
 
---Hay 2 que no cumplen la tercera FORma normal como se propuso
+--Hay 2 que no cumplen la tercera forma normal como se propuso
 SELECT grupo.messec, grupo.clasificac
 FROM (SELECT DISTINCT messec, clasificac, RIESGO
 		FROM zonas_riesgoTmp) grupo
@@ -326,7 +326,7 @@ BEGIN
 		FETCH NEXT FROM zonas_llave INTO @Geom
 	END
 
-	--Revisamos si rompe tercera FORma normal
+	--Revisamos si rompe tercera forma normal
 	DECLARE v CURSOR FOR
 		SELECT DISTINCT RIESGO
 		FROM zonas_riesgoTmp
@@ -353,7 +353,7 @@ CLOSE zonas_repetidas
 DEALLOCATE zonas_repetidas
 --
 
---Ya estan agrupadas y cumplen la tercera FORma normal propuesta
+--Ya estan agrupadas y cumplen la tercera forma normal propuesta
 SELECT * FROM zonas_riesgoTmp2;
 --
 
