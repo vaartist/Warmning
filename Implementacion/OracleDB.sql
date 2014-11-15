@@ -1,3 +1,5 @@
+use DW_user4;
+
 DROP TABLE Informacion_Carreteras_Canton;
 DROP TABLE Unidades_Estacion_Bomberos;
 DROP TABLE Estacion_Bomberos;
@@ -65,8 +67,8 @@ CREATE TABLE Estacion_Bomberos(
 );
 /* Trigger que calcule la longitud del camino */
 CREATE TABLE Camino(
-	NumeroRuta				VARCHAR(60),
-	Tipo					VARCHAR(15),
+	NumeroRuta				VARCHAR(255),
+	Tipo					VARCHAR(25),
 	Longitud				FLOAT, -- Kilometros
 	Geom					geometry,
 
@@ -96,7 +98,7 @@ CREATE TABLE Interseca(
 /* Trigger que calcule longitud */
 CREATE TABLE Cruza(
 	CodigoCanton			INTEGER,
-	NumeroRutaCamino		VARCHAR(15),
+	NumeroRutaCamino		VARCHAR(255),
 	Longitud FLOAT,
 
 	CONSTRAINT pk_cruza PRIMARY KEY(CodigoCanton,NumeroRutaCamino),
