@@ -248,6 +248,7 @@ DEALLOCATE rutas_ND
 Select * from caminoTmp2;
 
 -- Procedimiento para dar a los caminos sin nombre un nuevo nombre
+-- Quedo aqui historicamente, realmente no funciono rapido
 Declare @IDND			integer,
 		@TIPOND			nvarchar(MAX),
 		@RUTA			nvarchar(MAX),
@@ -290,3 +291,56 @@ BEGIN
 	DEALLOCATE camino_nombrado
 END
 
+
+-- Insertamos los caminos cuyo nombre es aceptable
+Insert into Camino
+Select RUTA, TIPO, 0, geom from caminoTmp2 where ruta != 'ND';
+Delete from caminoTmp2 where ruta != 'ND';
+
+-- Buscamos para cada camino sin nombre alguno que pueda nombrarlo, y lo insertamos
+Declare
+	@ID			integer,
+	@GEOM		geometry,
+	@COUNT		integer,
+	@RUTA		varchar(max),
+	@TIPO		varchar(max),
+	@ADICION	integer
+SET @COUNT = 1
+Declare sin_nombre cursor for
+	Select id, Tipo, geom
+	From caminoTmp2
+Open sin_nombre
+Fetch from sin_nombre into @ID, @Tipo, @GEOM
+While( @@FETCH_STATUS = 0 )
+BEGIN
+	Declare con_nombre cursor for
+		Select TOP(1) NumeroRuta
+		from Camino
+		Where Geom.STIntersects( @GEOM ) = 1
+	Open con_nombre
+	Fetch from con_nombre into @RUTA
+	If( @@FETCH_STATUS = 0 )
+	BEGIN
+		SET @ADICION = 1
+		-- Va a ver que revisar que no haya colisiones de nombre
+		While( Exists ( Select numeroRuta From Camino Where NumeroRuta = @RUTA + '-' + cast(@ADICION as varchar(255)) ) )
+			SET @ADICION = @ADICION + 1
+		-- Agregar a una con nombre modificado y luego borrar de la vieja tabla
+		Insert into Camino Values( @RUTA + '-' + cast(@ADICION as varchar(255)), @TIPO, 0, @GEOM )
+		If( Exists ( Select numeroRuta From Camino Where NumeroRuta = @RUTA + '-' + cast(@ADICION as varchar(255)) ) )
+		BEGIN
+			Delete from caminoTmp2 where ID = @ID
+			Print 'Total rutas cambiadas: ' + cast(@COUNT as varchar(255)) + ', Nombre nuevo: ' + @RUTA + '-' + cast(@ADICION as varchar(255))
+			SET @COUNT = @COUNT + 1
+		END
+		Else
+			Print 'Se trato de insertar la ruta ' + cast(@ID as varchar(255)) + ' con el nombre ' + @RUTA + '-' + cast(@ADICION as varchar(255)) + ', pero no se pudo'
+	END
+	ELSE
+		Print 'No se encontro nombre para ruta con id: ' + cast(@ID as varchar(255))
+	Close con_nombre
+	Deallocate con_nombre
+	Fetch next from sin_nombre into @ID, @Tipo, @GEOM
+END
+Close sin_nombre
+Deallocate sin_nombre

@@ -247,3 +247,51 @@ END
 CLOSE v_cursor_interDistrit
 DEALLOCATE v_cursor_interDistrit
 DEALLOCATE v_cursor_interZR
+
+
+--Trigger para revisar que la geometria de camino es valida y buscar relaciones topologicas
+DROP TRIGGER camino_insert;
+CREATE TRIGGER camino_insert
+ON camino
+INSTEAD OF INSERT
+AS
+	--Declarar variables para cursor
+	DECLARE @NumeroRuta		varchar(255),
+			@Tipo			varchar(25),
+			@Geom			geometry,
+			@CodCanton		int,
+			@GeomCanton		geometry
+	--Declararar el cursor
+	DECLARE cursor_tabla CURSOR FOR
+		SELECT	NumeroRuta, Tipo, Geom
+		FROM INSERTED
+	--Abrir cursor y usar FETCH
+	OPEN cursor_tabla
+	FETCH cursor_tabla INTO @NumeroRuta, @Tipo, @Geom
+	WHILE(@@FETCH_STATUS = 0)
+	BEGIN
+		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() = 'LineString' OR @Geom.STGeometryType() = 'MultiLineString') )
+		BEGIN
+			Insert into Camino Values( @NumeroRuta, @Tipo, @Geom.STLength(), @Geom );
+			Declare cursor_canton cursor for
+				Select Codigo, Geom
+				From Canton
+				Where Geom.STIntersects( @Geom ) = 1
+			Open cursor_canton
+			Fetch from cursor_canton into @CodCanton, @GeomCanton
+			While( @@FETCH_STATUS = 0 )
+			BEGIN
+				Insert into Cruza Values( @CodCanton, @NumeroRuta, @GeomCanton.STIntersection( @Geom ).STLength() )
+				Fetch next from cursor_canton into @CodCanton, @GeomCanton
+			END
+			Close cursor_canton
+			Deallocate cursor_canton
+		END
+		Else
+			Print 'ERROR: Geometría no válida para camino con nombre ' + @NumeroRuta
+		FETCH NEXT FROM cursor_tabla INTO @NumeroRuta, @Tipo, @Geom
+	END
+	--Cerrar cursor
+	CLOSE cursor_tabla
+	DEALLOCATE cursor_tabla
+--Fin de trigger
