@@ -77,7 +77,7 @@ CREATE TABLE Estacion_Bomberos
 );
 /* Trigger que calcule la longitud del camino */
 CREATE TABLE Camino(
-	NumeroRuta				VARCHAR(255),
+	NumeroRuta				VARCHAR(895),
 	Tipo					VARCHAR(25),
 	Longitud				FLOAT, -- Kilometros
 	Geom					GEOMETRY,
@@ -114,7 +114,7 @@ CREATE TABLE Interseca
 CREATE TABLE Cruza
 (
 	CodigoCanton			INTEGER,
-	NumeroRutaCamino		VARCHAR(255),
+	NumeroRutaCamino		VARCHAR(895),
 	Longitud FLOAT,
 
 	CONSTRAINT pk_cruza PRIMARY KEY(CodigoCanton,NumeroRutaCamino),
