@@ -107,6 +107,9 @@ FROM distritoTmp
 WHERE geom.STIsValid() = 0;
 --
 
+DELETE FROM distritoTmp
+WHERE NDISTRITO = 'NA';
+
 --Validar
 UPDATE distritoTmp
 SET GEOM = GEOMETRY::STGeomFromWKB(geom.MakeValid().STAsBinary(), geom.STSrid)
@@ -130,8 +133,7 @@ SET GEOM = GEOMETRY::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSri
 
 SELECT * FROM distritoTmp;
 
-DELETE FROM distritoTmp
-WHERE NDISTRITO = 'NA';
+
 --
 
 --Ocurre que hay distritos que no son unicos...
@@ -170,13 +172,16 @@ BEGIN
 		FROM distritoTmp
 		WHERE CODDIST = @Coddist
 	OPEN distritos_codigo
-	FETCH NEXT FROM distritos_codigo INTO @Geom
+	FETCH FROM distritos_codigo INTO @Geom
 	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
-		SET @UnionGeo = @Geom.STUnion( @UnionGeo ) 
+		IF( @UnionGeo.IsNull = null )
+			SET @UnionGeo = @GEOM
+		ELSE
+			SET @UnionGeo = @UnionGeo.STUnion( @GEOM ) 
 		FETCH NEXT FROM distritos_codigo INTO @Geom
 	END
-	INSERT INTO distritoTmp2 VALUES( @ID, @NDistrito, @Coddist, @GEOM )
+	INSERT INTO distritoTmp2 VALUES( @ID, @NDistrito, @Coddist, @UnionGeo )
 	CLOSE distritos_codigo
 	DEALLOCATE distritos_codigo
 	--Fin ciclo anidado

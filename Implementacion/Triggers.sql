@@ -166,7 +166,7 @@ AS
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
 		--Determinar con cuál provincia es mayor el área de intersección con la geometría del nuevo cantón
-		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() = 'Polygon' OR @Geom.STGeometryType() = 'MultiPolygon') )
+		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() In ('Polygon', 'MultiPolygon', 'GeometryCollection') ) )
 		BEGIN
 			--Declarar el cursor interno, la consulta obtiene el código y las áreas de intersección entre el cantón y todas las provincias,
 			--luego ordena por área y descendentemente para que el cursor obtenga el primer código (correspondiente al área de intersección mayor).
