@@ -175,10 +175,10 @@ BEGIN
 	FETCH FROM distritos_codigo INTO @Geom
 	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
-		IF( @UnionGeo.IsNull = null )
-			SET @UnionGeo = @GEOM
+		IF( @UnionGeo.IsNull = 0 )
+			SET @UnionGeo = @UnionGeo.STUnion( @GEOM )
 		ELSE
-			SET @UnionGeo = @UnionGeo.STUnion( @GEOM ) 
+			SET @UnionGeo = @GEOM
 		FETCH NEXT FROM distritos_codigo INTO @Geom
 	END
 	INSERT INTO distritoTmp2 VALUES( @ID, @NDistrito, @Coddist, @UnionGeo )
@@ -327,7 +327,10 @@ BEGIN
 	FETCH NEXT FROM zonas_llave INTO @Geom
 	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
-		SET @UnionGeo = @Geom.STUnion( @UnionGeo ) 
+		IF( @UnionGeo.IsNull = 0 )
+			SET @UnionGeo = @UnionGeo.STUnion( @GEOM )
+		ELSE
+			SET @UnionGeo = @GEOM
 		FETCH NEXT FROM zonas_llave INTO @Geom
 	END
 
@@ -346,7 +349,7 @@ BEGIN
 	DEALLOCATE v
 	--
 
-	INSERT INTO zonas_riesgoTmp2 VALUES( @ID, @MESSEC, @CLASIFICAC, @RIESGO, @GEOM )
+	INSERT INTO zonas_riesgoTmp2 VALUES( @ID, @MESSEC, @CLASIFICAC, @RIESGO, @UnionGeo )
 	CLOSE zonas_llave
 	DEALLOCATE zonas_llave
 	--Fin ciclo anidado
@@ -497,5 +500,6 @@ UPDATE viviendasYpoblacion SET Lugar = 'San José' WHERE Lugar='San José o Pizote
 UPDATE viviendasYpoblacion SET Lugar = 'Aguacaliente' WHERE Lugar='Aguacaliente o San Francisco';
 UPDATE viviendasYpoblacion SET Lugar = 'Guadalupe' WHERE Lugar='Guadalupe o Arenilla';
 UPDATE viviendasYpoblacion SET Lugar = 'Puerto Carrillo' WHERE Lugar='Puente Carrillo';
+UPDATE viviendasYpoblacion SET Lugar = 'El Rosario' WHERE Lugar='Rosario';
 UPDATE viviendasYpoblacion SET Lugar = LTRIM(RTRIM(Lugar));
 --
