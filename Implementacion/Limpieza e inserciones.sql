@@ -398,12 +398,96 @@ SET GEOM = GEOMETRY::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSri
 --
 
 --Unir caminos con mismo nombre
+DROP TABLE caminoTmp2
 CREATE TABLE caminoTmp2(
-	id INT,
-	Ruta VARCHAR(255),
-	Tipo VARCHAR(15),
-	GEOM GEOMETRY
+	Id			INT				IDENTITY(1,1),
+	Ruta		VARCHAR(1024),
+	Tipo		VARCHAR(32),
+	Longitud	FLOAT,
+	geom		GEOMETRY
+	CONSTRAINT PK_caminoTmp2 PRIMARY KEY(Id)
 );
+--
+DECLARE @Ruta			VARCHAR(1024),
+		@Tipo			VARCHAR(32),
+		@SumaLongitudes	FLOAT,
+		@GEO			GEOMETRY,
+		@UnionGeom		GEOMETRY
+DECLARE cursor_tabla CURSOR FOR
+	SELECT		DISTINCT RUTA
+	FROM		caminoTmp
+	WHERE		RUTA != 'ND'
+OPEN cursor_tabla
+FETCH NEXT FROM cursor_tabla INTO @Ruta
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	SET @UnionGeom = null
+	DECLARE cursor_interno CURSOR FOR
+		SELECT	geom
+		FROM	caminoTmp
+		WHERE	RUTA = @Ruta
+	OPEN cursor_interno
+	FETCH FROM cursor_interno INTO @GEO
+	WHILE( @@FETCH_STATUS = 0 )
+	BEGIN
+		IF( @UnionGeom.IsNull = null )
+			SET @UnionGeom = @GEO
+		ELSE
+			SET @UnionGeom = @UnionGeom.STUnion( @GEO ) 
+		FETCH NEXT FROM cursor_interno INTO @GEO
+	END
+	SET	@Tipo =				(SELECT	TOP 1 TIPO		FROM	caminoTmp	WHERE	RUTA = @Ruta)
+	SET	@SumaLongitudes =	(SELECT	SUM(LONGITUD)	FROM	caminoTmp	WHERE	RUTA = @Ruta)
+	INSERT INTO caminoTmp2 VALUES(@Ruta, @Tipo, @SumaLongitudes, @UnionGeom)
+	CLOSE cursor_interno
+	DEALLOCATE cursor_interno
+	PRINT 'Insertada la ruta ' + @Ruta
+	FETCH NEXT FROM cursor_tabla INTO @Ruta
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
+--
+--ahora insertar las sin nombre
+DECLARE @Tipo			VARCHAR(32),
+		@Longitud		FLOAT,
+		@GEOM			GEOMETRY
+DECLARE cursor_tabla CURSOR FOR
+	SELECT		TIPO, LONGITUD, geom
+	FROM		caminoTmp
+	WHERE		RUTA = 'ND'
+OPEN cursor_tabla
+FETCH NEXT FROM cursor_tabla INTO @Tipo, @Longitud, @GEOM
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	INSERT INTO caminoTmp2 VALUES('ND', @Tipo, @Longitud, @GEOM)
+	FETCH NEXT FROM cursor_tabla INTO @Tipo, @Longitud, @GEOM
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
+--
+--Revisiones:
+SELECT		DISTINCT RUTA
+FROM		caminoTmp
+WHERE		RUTA != 'ND'
+--2658 rutas con nombre (distinto)
+SELECT		COUNT(*)
+FROM		caminoTmp
+WHERE		RUTA = 'ND'
+--100102 sin nombre
+--102760 rutas en total
+SELECT	*
+FROM	caminoTmp2
+WHERE	RUTA != 'ND'
+--2658 filas de rutas con nombre y unidas, bien
+SELECT		COUNT(*)
+FROM		caminoTmp2
+WHERE		RUTA = 'ND'
+--100102 rutas sin nombre, todo bien
+
+
+
+
+
 
 DROP TABLE caminoTmp2;
 
