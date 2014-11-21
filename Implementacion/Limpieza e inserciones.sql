@@ -410,7 +410,8 @@ CREATE TABLE caminoTmp2(
 	geom		GEOMETRY
 	CONSTRAINT PK_caminoTmp2 PRIMARY KEY(Id)
 );
---
+--Unir caminos con el mismo nombre, genera una única tupla con el primer tipo encontrado de entre
+--los caminos del mismo nombre, con la suma de sus longitudes, y con la unión de sus geometrías
 DECLARE @Ruta			VARCHAR(1024),
 		@Tipo			VARCHAR(32),
 		@SumaLongitudes	FLOAT,
@@ -433,10 +434,10 @@ BEGIN
 	FETCH FROM cursor_interno INTO @GEO
 	WHILE( @@FETCH_STATUS = 0 )
 	BEGIN
-		IF( @UnionGeom.IsNull = null )
-			SET @UnionGeom = @GEO
+		IF( @UnionGeom.IsNull = 0 )
+			SET @UnionGeom = @UnionGeom.STUnion( @GEO )
 		ELSE
-			SET @UnionGeom = @UnionGeom.STUnion( @GEO ) 
+			SET @UnionGeom = @GEO
 		FETCH NEXT FROM cursor_interno INTO @GEO
 	END
 	SET	@Tipo =				(SELECT	TOP 1 TIPO		FROM	caminoTmp	WHERE	RUTA = @Ruta)
@@ -444,7 +445,7 @@ BEGIN
 	INSERT INTO caminoTmp2 VALUES(@Ruta, @Tipo, @SumaLongitudes, @UnionGeom)
 	CLOSE cursor_interno
 	DEALLOCATE cursor_interno
-	PRINT 'Insertada la ruta ' + @Ruta
+	--PRINT 'Insertada la ruta ' + @Ruta
 	FETCH NEXT FROM cursor_tabla INTO @Ruta
 END
 CLOSE cursor_tabla
@@ -478,6 +479,7 @@ FROM		caminoTmp
 WHERE		RUTA = 'ND'
 --100102 sin nombre
 --102760 rutas en total
+--
 SELECT	*
 FROM	caminoTmp2
 WHERE	RUTA != 'ND'
