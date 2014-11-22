@@ -19,13 +19,6 @@ SELECT	*	FROM	Cruza				--Falta--
 SELECT	*	FROM	Interseca			--Listo
 SELECT	*	FROM	Estacion_Bomberos	--Listo
 
---REVISAR:
-SELECT	*	FROM	Canton	WHERE	Nombre='HEREDIA';
---Parece que el cantón de Heredia abarca dos áreas, al centro y arriba debajo de Sarapiquí, y está bien:
--- http://www.mapasdecostarica.info/atlascantonal/heredia.htm
---Borrar esto después.
-
-
 
 
 --Problemas a resolver:
@@ -67,13 +60,13 @@ SET			@Localizacion = GEOMETRY::Point(478543.64500605746, 1106318.5944643875, 0)
 --SET		@Localizacion = GEOMETRY::Point(, , 0)
 --SET		@Localizacion = GEOMETRY::Point(, , 0)
 SELECT		TOP 3
-			Nombre										AS	'Nombre de la estación',
-			Direccion									AS	'Dirección de la estación',
-			CalcularDistanciaReal(@Localizacion, Geom)	AS	'Distancia en línea recta (kilometros)',	--Considerar usar ROUND para redondear la distancia
-			CodigoDistrito								AS	'Código del distrito',
-			Geom.ToString()								AS	'Ubicación en el mapa'					--Opcional
+			Nombre											AS	'Nombre de la estación',
+			Direccion										AS	'Dirección de la estación',
+			dbo.CalcularDistanciaReal(@Localizacion, Geom)	AS	'Distancia real',			--Considerar usar ROUND para redondear la distancia
+			CodigoDistrito									AS	'Código del distrito',
+			Geom.ToString()									AS	'Ubicación en el mapa'		--Opcional
 FROM		Estacion_Bomberos
-ORDER BY	CalcularDistanciaReal(@Localizacion, Geom)
+ORDER BY	dbo.CalcularDistanciaReal(@Localizacion, Geom)
 --Fin de consulta
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -204,9 +197,60 @@ CREATE FUNCTION dbo.CalcularDistanciaReal
 RETURNS	INT
 AS
 BEGIN
-	DECLARE	@DistanciaReal	INT
-	--Primero hay que encontrar la ruta óptima
-	RETURN	@DistanciaReal
+	--Primero hay que procesar los caminos alrededor del punto de incendio, almacenando
+	--sus nodos y aristas en las tablas respectivas
+	dbo.ProcesarCaminosAlrededorDe(@LocalizacionA)
+	--Luego hay que encontrar la ruta óptima usando la variación del algoritmo de Dijsktra
+	RETURN	dbo.Dijkstra(@LocalizacionA, @LocalizacionB)
 END
 --Fin de función
 --DROP FUNCTION dbo.CalcularDistanciaReal
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Calcular on-demand los vértices y aristas de las calles cuando se consulten distancias reales
+CREATE FUNCTION dbo.ProcesarCaminosAlrededorDe
+(
+	@Localizacion	GEOMETRY
+)
+RETURNS VOID
+AS
+BEGIN
+	DECLARE	@DistanciaEstacionMasLejana	INT,
+			@BufferAlrededorDeLocacion	GEOMETRY,
+			@NumeroRutaCamino			VARCHAR(895),
+			@GeometriaCamino			GEOMETRY
+	--Primero se calcula la distancia a la estación más lejana de las (por ahora 3) más cercanas
+	SET		@DistanciaEstacionMasLejana = (SELECT		TOP 1
+														Distancia
+											FROM		(SELECT		TOP 3
+																	@Localizacion.STDistance(Geom) AS Distancia
+														FROM		Estacion_Bomberos
+														ORDER BY	@Localizacion.STDistance(Geom)) AS Resultado
+											ORDER BY	Distancia DESC)
+	--Luego se obtiene un buffer alrededor de la locación usando esa distancia más un poco más (5 kilómetros por ahora)
+	SET		@BufferAlrededorDeLocacion = @Localizacion.STBuffer(@DistanciaEstacionMasLejana + 5000)
+	--Después con un cursor se itera por los caminos que intersecan ese buffer y no han sido procesados,
+	--para procesarlos (agregar sus nodos y aristas a las tablas respectivas)
+	DECLARE	cursor_caminos	CURSOR FOR
+		SELECT	NumeroRuta, Geom
+		FROM	Camino
+		WHERE	Procesado = 0 AND Geom.STIntersects(@BufferAlrededorDeLocacion) = 1
+	--Abrir cursor y usar FETCH
+	OPEN cursor_caminos
+	FETCH cursor_caminos INTO @NumeroRutaCamino, @GeometriaCamino
+	WHILE(@@FETCH_STATUS = 0)
+	BEGIN
+		--Se declara otro cursor para iterar por todos los "puntos" donde el camino se interseca con otro
+		--y agregar éstos a la tabla de nodos
+
+		--Luego se divide ese camino en aristas usando los nodos existentes, tal que si dos nodos intersecan
+		--al camino, se agrega la arista a la tabla como el subcamino comprendido entre esos dos nodos
+		FETCH NEXT FROM cursor_tabla INTO @NumeroRutaCamino, @GeometriaCamino
+	END
+	--Cerrar cursor
+	CLOSE cursor_caminos
+	DEALLOCATE cursor_caminos
+END
+--Fin de función
+--DROP FUNCTION dbo.ProcesarCaminosAlrededorDe

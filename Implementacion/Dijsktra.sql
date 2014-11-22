@@ -114,11 +114,12 @@ BEGIN
         FROM	#Nodes n JOIN BacktraceCTE cte ON n.Predecessor = cte.ID
 				JOIN dbo.Vertices_Calles node ON n.ID = node.ID
     )
-    SELECT	ID,
-			Name,
-			Distance,
-			Path,
-			NamePath
+    SELECT	--ID,
+			--Name,
+			--Distance,
+			--Path,
+			--NamePath
+			Distance
 	FROM	BacktraceCTE
     WHERE	ID = @EndNode	OR
 			@EndNode IS NULL		--Tener cuidado con esto, mal plan de ejecución
