@@ -4,9 +4,10 @@ USE DW_user4;
 --Implementar las siguientes consultas (en orden de prioridad):
 --1.--Lista--Obtener información sobre las estaciones de bomberos más cercanas a un punto cualquiera en el país.
 --2.--Falta--Obtener información sobre las estaciones de bomberos más cercanas a un punto cualquiera en el país, tomando en cuenta la distancia real que debe recorrerse (caminos).
---3.--Falta--Obtener nivel de peligro de incendio en cualquier punto del país, tomando en cuenta zonas de riesgo y distancia a las estaciones de bomberos más cercanas con distancia real.
+--3.--Lista--Obtener nivel de peligro de incendio en cualquier punto del país, tomando en cuenta zonas de riesgo y distancia a las estaciones de bomberos más cercanas con distancia real.
 --4.--Falta--Obtener "área de influencia" de una estación de bomberos (más adelante mostrar según distancias de caminos el área que puede cubrir rápidamente). (nueva)
 --5.--Falta--Obtener la unión de esas áreas de influencia para determinar lugares en el país que no estén dentro de ninguna, para recomendar creación de nuevas estaciones. (nueva)
+--6.--Falta--Obtener la cantidad de unidades distintas de las estaciones cuya área de influencia tocan un distrito.
 --Agregar más porque 3 suena como muy poco...
 
 SELECT	*	FROM	Provincia			--Listo
@@ -48,7 +49,7 @@ SET			@Localizacion = GEOMETRY::Point(478543.64500605746, 1106318.5944643875, 0)
 SELECT		TOP 3
 			Nombre							AS	'Nombre de la estación',
 			Direccion						AS	'Dirección de la estación',
-			@Localizacion.STDistance(Geom)	AS	'Distancia en línea recta (metros)',	--Considerar usar ROUND para redondear la distancia
+			@Localizacion.STDistance(Geom)	AS	'Distancia en línea recta (kilometros)',	--Considerar usar ROUND para redondear la distancia
 			CodigoDistrito					AS	'Código del distrito',
 			Geom.ToString()					AS	'Ubicación en el mapa'					--Opcional
 FROM		Estacion_Bomberos
@@ -68,7 +69,7 @@ SET			@Localizacion = GEOMETRY::Point(478543.64500605746, 1106318.5944643875, 0)
 SELECT		TOP 3
 			Nombre										AS	'Nombre de la estación',
 			Direccion									AS	'Dirección de la estación',
-			CalcularDistanciaReal(@Localizacion, Geom)	AS	'Distancia en línea recta (metros)',	--Considerar usar ROUND para redondear la distancia
+			CalcularDistanciaReal(@Localizacion, Geom)	AS	'Distancia en línea recta (kilometros)',	--Considerar usar ROUND para redondear la distancia
 			CodigoDistrito								AS	'Código del distrito',
 			Geom.ToString()								AS	'Ubicación en el mapa'					--Opcional
 FROM		Estacion_Bomberos
@@ -80,7 +81,9 @@ ORDER BY	CalcularDistanciaReal(@Localizacion, Geom)
 --Consulta 3: Obtener nivel de peligro de incendio en cualquier punto del país, tomando en cuenta zonas de riesgo y distancia a las estaciones de bomberos más cercanas con distancia real.
 --Se muestran los datos de manera formal para la consulta.
 DECLARE		@Localizacion	GEOMETRY,
-			@NivelPeligro	VARCHAR(100)
+			@NivelPeligro	VARCHAR(10),
+			@Distancia		FLOAT,
+			@RangoRiesgo	INT
 SET			@Localizacion = GEOMETRY::Point(478543.64500605746, 1106318.5944643875, 0) --el SRID usado es el 0
 --Más pruebas:
 --SET		@Localizacion = GEOMETRY::Point(, , 0)
@@ -88,7 +91,26 @@ SET			@Localizacion = GEOMETRY::Point(478543.64500605746, 1106318.5944643875, 0)
 --SET		@Localizacion = GEOMETRY::Point(, , 0)
 --Primero hay que fijarse si interseca con una zona de riesgo, y si es así, revisar el nivel de riesgo de la misma
 --Luego hay que obtener la distancia real a la estación de bomberos más cercana, y según esta disminuir o aumentar el nivel de peligro
+SET @NivelPeligro = (SELECT TOP 1 ZR.Riesgo FROM Zonas_Riesgo ZR WHERE ZR.Geom.STIntersects( @Localizacion ) = 1 ORDER BY ( Select TOP 1 NR.Nivel FROM Nivel_Riesgo NR Where NR.Riesgo = ZR.Riesgo  ) DESC )
+IF( @NivelPeligro is not null )
+BEGIN
+	SET @Distancia = ( SELECT TOP 1 @Localizacion.STDistance(Geom) FROM Estacion_Bomberos ORDER BY @Localizacion.STDistance(Geom) )
+	SET @RangoRiesgo = ( SELECT Nivel FROM Nivel_Riesgo WHERE Riesgo = @NivelPeligro )
+	IF( @Distancia < 10 AND @RangoRiesgo > 1 )
+		SET @RangoRiesgo = @RangoRiesgo - 1
+	IF( @Distancia > 50 AND @RangoRiesgo < 5 )
+		SET @RangoRiesgo = @RangoRiesgo + 1
+	SET @NivelPeligro = ( SELECT Riesgo FROM Nivel_Riesgo WHERE Nivel = @RangoRiesgo )
+END
+Select @NivelPeligro
 --Fin de consulta
+-- Tabla de evaluacion de nivel de riesgo
+CREATE TABLE Nivel_Riesgo
+(
+	Nivel		int,
+	Riesgo		varchar(10)
+);
+Insert Into Nivel_Riesgo Values( 1, 'BAJO' ), ( 2, 'BAJO-MEDIO' ), ( 3, 'MEDIO' ), ( 4, 'ALTO' ), ( 5, 'MUY ALTO' )
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -155,6 +177,21 @@ DEALLOCATE	Cursor_Provincias
 SET			@AreasRiesgo = @AreaTotal.STDifference(@AreasInfluencia)
 SELECT		@AreasRiesgo
 --Fin de consulta
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Consulta 6. Obtener la cantidad de unidades distintas de las estaciones cuya área de influencia tocan un distrito.
+--Se muestran los datos de manera formal para la consulta.
+DECLARE	@Codigo_Distrito	integer,
+		@Geom_Distrito		geometry,
+		@Radio				integer
+SET		@Codigo_Distrito = 40205
+SET		@Radio = 20000
+SET		@Geom_Distrito = ( SELECT Geom FROM Distrito WHERE Codigo = @Codigo_Distrito )
+SELECT Tipo as 'Tipo De Unidad', SUM(Cantidad) as 'Cantidad'
+FROM Estacion_Bomberos join Unidades_Estacion_Bomberos on Nombre = NombreEstacion
+WHERE Geom.STBuffer(@Radio).STIntersects( @Geom_Distrito ) = 1
+GROUP BY Tipo
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
