@@ -20,6 +20,16 @@ Select @unionGeom.STEnvelope().STAsText()
 -- bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 )
 
 
-Create Spatial index camino_geom_idx
-	on camino(geom)
-	with( bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ) )
+CREATE SPATIAL INDEX IX_provincia_geom
+	ON Provincia ( Geom ) WITH (bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
+CREATE SPATIAL INDEX IX_canton_geom
+	ON Canton (Geom) WITH (bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
+CREATE SPATIAL INDEX IX_distrito_geom
+	ON Distrito ( Geom ) WITH (bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
+CREATE SPATIAL INDEX IX_estacion_bomberos_geom
+	ON Estacion_Bomberos (Geom) WITH (bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
+CREATE SPATIAL INDEX IX_zonas_riesgo_geom
+	ON Zonas_Riesgo (Geom) WITH (bounding_box = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
+CREATE SPATIAL INDEX IX_Camino_Geom
+	ON Camino(Geom)
+	WITH( BOUNDING_BOX = ( 283582.5, 889283.75, 658921.875, 1241133.25 ));
