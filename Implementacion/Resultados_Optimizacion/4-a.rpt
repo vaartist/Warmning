@@ -1,0 +1,68 @@
+﻿SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 0 ms.
+
+ SQL Server Execution Times:
+   CPU time = 0 ms,  elapsed time = 0 ms.
+SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 19 ms.
+Nombre               
+-------------------- -----------
+ABANGARES            1
+ACOSTA               1
+AGUIRRE              1
+ALVARADO             1
+ATENAS               1
+BELEN                1
+BUENOS AIRES         1
+CANAS                1
+CARRILLO             1
+CARTAGO              1
+CORREDORES           1
+COTO BRUS            1
+ESPARZA              1
+GOICOECHEA           1
+GOLFITO              1
+GRECIA               1
+HEREDIA              1
+JIMENEZ              1
+LA UNION             1
+LIMON                1
+MATINA               1
+NARANJO              1
+NICOYA               1
+OROTINA              1
+OSA                  1
+PALMARES             1
+PARAISO              1
+PEREZ ZELEDON        1
+POAS                 1
+POCOCI               1
+PUNTARENAS           3
+PURISCAL             1
+SAN JOSE             5
+SAN RAMON            1
+SANTA ANA            1
+SANTA CRUZ           1
+SIQUIRRES            1
+TARRAZU              1
+TIBAS                1
+TURRIALBA            1
+VALVERDE VEGA        1
+ZARCERO              1
+
+(42 row(s) affected)
+
+Table 'Canton'. Scan count 0, logical reads 116, physical reads 2, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Distrito'. Scan count 0, logical reads 205, physical reads 1, read-ahead reads 176, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Estacion_Bomberos'. Scan count 1, logical reads 3, physical reads 1, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+
+
+(1 row(s) affected)
+
+ SQL Server Execution Times:
+   CPU time = 0 ms,  elapsed time = 94 ms.
+SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 0 ms.
+
+ SQL Server Execution Times:
+   CPU time = 0 ms,  elapsed time = 0 ms.

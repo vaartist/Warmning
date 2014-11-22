@@ -2,6 +2,8 @@ use DW_user4;
 
 SET STATISTICS IO ON;
 SET STATISTICS TIME ON;
+SET SHOWPLAN_TEXT ON;
+SET SHOWPLAN_TEXT OFF;
 DBCC DROPCLEANBUFFERS;
 DBCC FREEPROCCACHE;
 
@@ -88,12 +90,15 @@ Group by C.Nombre, C.Codigo
 
 -- 4
 -- In
-Select Nombre, Codigo, Geom
-From Distrito
-Where CodigoCanton in ( 401, 402, 403, 404, 405, 406, 407, 408, 409 )
+Select		C.Nombre, count(*)
+From		Canton C join (Distrito D join Estacion_Bomberos EB on D.Codigo = EB.CodigoDistrito) on C.Codigo = D.CodigoCanton
+Group by	C.Nombre
+Having		count(*) in ( 1, 3, 5 )
 
 
 -- Or
-Select Nombre, Codigo, Geom
-From Distrito
-Where CodigoCanton = 401 OR CodigoCanton = 401 OR CodigoCanton = 402 OR CodigoCanton = 403 OR CodigoCanton = 404 OR CodigoCanton = 405 OR CodigoCanton = 406 OR CodigoCanton = 407 OR CodigoCanton = 408 OR CodigoCanton = 409 
+Select C.Nombre, count(*)
+From Canton C join (Distrito D join Estacion_Bomberos EB on D.Codigo = EB.CodigoDistrito) on C.Codigo = D.CodigoCanton
+Group by C.Nombre
+Having count(*) = 1 OR count(*) = 3 OR count(*) = 5
+
