@@ -84,6 +84,8 @@ CREATE TABLE Camino(
 
 	CONSTRAINT pk_camino PRIMARY KEY(NumeroRuta)
 );
+--ALTER TABLE Camino
+--ADD	Procesado BIT
 
 CREATE TABLE Zonas_Riesgo
 (
