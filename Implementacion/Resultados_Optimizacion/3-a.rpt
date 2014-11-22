@@ -1,0 +1,108 @@
+﻿SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 0 ms.
+
+ SQL Server Execution Times:
+   CPU time = 0 ms,  elapsed time = 0 ms.
+Warning: The join order has been enforced because a local join hint is used.
+SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 31 ms.
+Nombre               Codigo      Hombres     Mujeres     Ocupadas    Desocupadas Colectivas
+-------------------- ----------- ----------- ----------- ----------- ----------- -----------
+SAN JOSE             101         136244      151375      81754       5130        62
+ESCAZU               102         26741       29992       16625       2115        16
+DESAMPARADOS         103         99336       107746      56980       2683        23
+PURISCAL             104         16641       16506       9832        1219        5
+TARRAZU              105         8091        8189        4551        1190        1
+ASERRI               106         28598       29832       16272       1153        6
+MORA                 107         12676       13558       7764        863         2
+GOICOECHEA           108         54097       60639       32429       1971        27
+SANTA ANA            109         23371       25508       14175       1571        32
+ALAJUELITA           110         37431       40370       19879       799         11
+VASQUEZ DE CORONADO  111         29415       31669       17333       1017        12
+ACOSTA               112         10218       9991        5871        967         1
+TIBAS                113         30274       34560       19162       1120        3
+MORAVIA              114         26692       30074       16843       1180        16
+MONTES DE OCA        115         22846       26162       16552       1657        17
+TURRUBARES           116         2852        2660        1679        696         1
+DOTA                 117         3398        3548        1951        772         2
+CURRIDABAT           118         30512       34522       19123       1532        9
+PEREZ ZELEDON        119         65860       69569       38729       6156        23
+LEON CORTES          120         6141        6059        3377        1090        1
+ALAJUELA             201         125620      128947      71936       5634        40
+SAN RAMON            202         39556       41017       23302       3569        11
+GRECIA               203         38030       38683       21660       1730        9
+SAN MATEO            204         3127        3009        1834        627         1
+ATENAS               205         12737       12723       7459        1208        1
+NARANJO              206         18775       19667       10505       1071        5
+PALMARES             207         17106       17610       9657        611         8
+POAS                 208         14518       14698       7909        688         2
+OROTINA              209         9985        10357       6024        1338        6
+SAN CARLOS           210         82049       81702       44968       5541        35
+ZARCERO              211         6103        6099        3333        265         1
+VALVERDE VEGA        212         8880        9206        5054        567         2
+UPALA                213         22018       21933       11518       1774        3
+LOS CHILES           214         12119       11607       6035        1141        5
+GUATUSO              215         5233        5148        2922        595         1
+CARTAGO              301         72493       75389       38618       2522        29
+PARAISO              302         28103       29334       14544       1301        4
+LA UNION             303         48212       51801       27148       1758        12
+JIMENEZ              304         7296        7373        4113        672         11
+TURRIALBA            305         34390       35156       20433       2756        6
+ALVARADO             306         7335        7288        3696        388         4
+OREAMUNO             307         22240       23234       11232       677         6
+EL GUARCO            308         21052       20729       10831       981         13
+HEREDIA              401         58402       64665       35083       2035        15
+BARVA                402         19891       20790       11299       895         6
+SANTO DOMINGO        403         19482       20558       11486       785         5
+SANTA BARBARA        404         17910       18419       10134       730         2
+SAN RAFAEL           405         22481       23586       12987       1123        6
+SAN ISIDRO           406         10179       10381       5784        357         4
+BELEN                407         10568       11240       6064        551         4
+FLORES               408         9816        10219       5751        407         3
+SAN PABLO            409         9571        10215       5642        413         3
+SARAPIQUI            410         29169       28174       15826       3361        34
+LIBERIA              501         30844       32143       16577       2089        19
+NICOYA               502         25006       25820       15039       3301        2
+SANTA CRUZ           503         27286       27824       16646       6085        12
+BAGACES              504         9857        9679        5615        914         2
+CARRILLO             505         18522       18473       10141       4405        8
+CANAS                506         12906       13288       7170        711         5
+ABANGARES            507         9015        9024        5311        923         3
+TILARAN              508         9736        9904        6018        1066        3
+NANDAYURE            509         5669        5451        3308        1073        0
+LA CRUZ              510         9437        9740        4732        854         3
+HOJANCHA             511         3654        3543        2028        472         0
+PUNTARENAS           601         57243       57766       33228       5849        18
+ESPARZA              602         14075       14568       8435        1785        3
+BUENOS AIRES         603         22809       22435       12205       2463        5
+MONTES DE ORO        604         6439        6511        3929        523         1
+OSA                  605         15038       14395       8905        2520        11
+AGUIRRE              606         13852       13040       8116        1572        7
+GOLFITO              607         19783       19353       11578       2189        6
+COTO BRUS            608         19132       19324       10937       2498        5
+PARRITA              609         8183        7827        4791        1388        11
+CORREDORES           610         20721       21109       11849       1173        4
+GARABITO             611         8700        8611        5313        4783        1
+LIMON                701         45751       48669       26665       3061        34
+POCOCI               702         63215       62632       36196       4643        22
+SIQUIRRES            703         28781       28072       16226       2145        47
+TALAMANCA            704         15659       15054       7999        1942        11
+MATINA               705         14858       13735       7959        1057        45
+GUACIMO              706         20676       20710       11828       1904        7
+
+(81 row(s) affected)
+
+Table 'Worktable'. Scan count 1, logical reads 1268, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Distrito'. Scan count 1, logical reads 164, physical reads 11, read-ahead reads 163, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Canton'. Scan count 1, logical reads 18, physical reads 1, read-ahead reads 24, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+
+
+(1 row(s) affected)
+
+ SQL Server Execution Times:
+   CPU time = 16 ms,  elapsed time = 94 ms.
+SQL Server parse and compile time: 
+   CPU time = 0 ms, elapsed time = 0 ms.
+
+ SQL Server Execution Times:
+   CPU time = 0 ms,  elapsed time = 0 ms.

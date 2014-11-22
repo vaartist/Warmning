@@ -469,6 +469,29 @@ END
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
 --
+--Luego borrar geometrías repetidas
+--
+DECLARE @ID		INT,
+		@Geom	GEOMETRY
+--Declararar el cursor
+DECLARE	cursor_tabla CURSOR FOR
+SELECT		ID, geom
+FROM		caminoTmp2
+--Abrir cursor y usar FETCH
+OPEN cursor_tabla
+FETCH cursor_tabla INTO @ID, @Geom
+WHILE(@@FETCH_STATUS = 0)
+BEGIN
+	DELETE	FROM caminoTmp2
+	WHERE	@Geom.STEquals(geom) = 1 AND ID != @ID
+	FETCH NEXT FROM cursor_tabla INTO @ID, @Geom
+END
+--Cerrar cursor
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
+--
+--
+--
 --Revisiones:
 SELECT		DISTINCT RUTA
 FROM		caminoTmp
