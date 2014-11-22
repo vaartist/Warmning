@@ -147,7 +147,7 @@ BEGIN
 	FETCH	cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
-		PRINT	'ID: ' + CONVERT(VARCHAR(256), @IDRutaInsertada)
+		--PRINT	'ID: ' + CONVERT(VARCHAR(256), @IDRutaInsertada)
 		SET		@Canton =  (SELECT		TOP 1 Codigo
 							FROM		Canton
 							GROUP BY	Codigo
@@ -176,8 +176,8 @@ BEGIN
 		--PRINT	'Nombre final: ' + @NumeroRutaNuevo
 		INSERT INTO Camino
 		VALUES	(@NumeroRutaNuevo, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar)
-		--DELETE	FROM caminoTmp2
-		--WHERE	ID = @IDRutaInsertada
+		DELETE	FROM caminoTmp2
+		WHERE	ID = @IDRutaInsertada
 		FETCH NEXT FROM cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
 	END
 	CLOSE		cursor_calles_sin_nombrar
