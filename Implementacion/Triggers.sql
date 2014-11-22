@@ -270,7 +270,7 @@ AS
 	FETCH cursor_tabla INTO @NumeroRuta, @Tipo, @Geom
 	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
-		IF( @Geom.STIsValid() = 1 AND (@Geom.STGeometryType() In ('Polygon', 'MultiPolygon', 'GeometryCollection') ) )
+		IF( @Geom.STIsValid() = 1 )
 		BEGIN
 			Insert into Camino Values( @NumeroRuta, @Tipo, @Geom.STLength(), @Geom );
 			Declare cursor_canton cursor for

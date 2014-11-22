@@ -129,67 +129,97 @@ DROP COLUMN	Revisado
 
 --Por razones de tiempo se decide nombrar las calles según un enfoque diferente, se dejarán las calles ya nombradas intactas, las restantes se nombrarán según el
 --cantón al que pertenece la mayor parte de su geometría, de forma que dentro de cada cantón se enumerarán las calles para nombrarlas.
-WHILE (SELECT COUNT(*) FROM caminoTmp2)
-DECLARE	@NumeroRutaNuevo		VARCHAR(895),
-		@GeomRutaSinNombrar		GEOMETRY,
-		@TipoRutaSinNombrar		VARCHAR(32),
-		@LongitudRutaSinNombrar	FLOAT,
-		@NumeroDentroDeCanton	INT,
-		@IDRutaInsertada		INT,
-		@Canton					VARCHAR(20),
-		@NombreAux				VARCHAR(895)
-DECLARE cursor_calles_sin_nombrar CURSOR FOR
-		SELECT	ID, TIPO, LONGITUD, geom
-		FROM	caminoTmp2
-CREATE	TABLE Tabla_Temporal_Contadores_Calles_Cantones
-(
-	CodigoCanton	INT,
-	CantidadCalles	INT
-)
---Empezar
-OPEN	cursor_calles_sin_nombrar
-FETCH	cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
-WHILE(@@FETCH_STATUS = 0)
+WHILE ((SELECT COUNT(*) FROM caminoTmp2) > 0)
 BEGIN
-	--PRINT	'ID: ' + CONVERT(VARCHAR(256), @IDRutaInsertada)
-	SET		@Canton =  (SELECT		TOP 1 Codigo
-						FROM		Canton
-						GROUP BY	Codigo
-						ORDER BY	MAX(Geom.STIntersection(@GeomRutaSinNombrar).STArea()) DESC)
-	--PRINT	'Cantón: ' + @Canton
-	SET		@NumeroDentroDeCanton =(SELECT	CantidadCalles
-									FROM	Tabla_Temporal_Contadores_Calles_Cantones
-									WHERE	CodigoCanton = @Canton)
-	IF(@NumeroDentroDeCanton > 0)
+	DECLARE	@NumeroRutaNuevo		VARCHAR(895),
+			@GeomRutaSinNombrar		GEOMETRY,
+			@TipoRutaSinNombrar		VARCHAR(32),
+			@LongitudRutaSinNombrar	FLOAT,
+			@NumeroDentroDeCanton	INT,
+			@IDRutaInsertada		INT,
+			@Canton					VARCHAR(20),
+			@NombreAux				VARCHAR(895)
+	DECLARE cursor_calles_sin_nombrar CURSOR FOR
+			SELECT	ID, TIPO, LONGITUD, geom
+			FROM	caminoTmp2
+	--Empezar
+	OPEN	cursor_calles_sin_nombrar
+	FETCH	cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
+	WHILE(@@FETCH_STATUS = 0)
 	BEGIN
-		UPDATE	Tabla_Temporal_Contadores_Calles_Cantones
-		SET		CantidadCalles = @NumeroDentroDeCanton + 1
-		WHERE	CodigoCanton = @Canton
+		PRINT	'ID: ' + CONVERT(VARCHAR(256), @IDRutaInsertada)
+		SET		@Canton =  (SELECT		TOP 1 Codigo
+							FROM		Canton
+							GROUP BY	Codigo
+							ORDER BY	MAX(Geom.STIntersection(@GeomRutaSinNombrar).STArea()) DESC)
+		--PRINT	'Cantón: ' + @Canton
+		SET		@NumeroDentroDeCanton =(SELECT	CantidadCalles
+										FROM	Tabla_Temporal_Contadores_Calles_Cantones
+										WHERE	CodigoCanton = @Canton)
+		IF(@NumeroDentroDeCanton > 0)
+		BEGIN
+			UPDATE	Tabla_Temporal_Contadores_Calles_Cantones
+			SET		CantidadCalles = @NumeroDentroDeCanton + 1
+			WHERE	CodigoCanton = @Canton
+		END
+		ELSE
+		BEGIN
+			INSERT	INTO	Tabla_Temporal_Contadores_Calles_Cantones
+			VALUES	(@Canton, 1)
+			SET		@NumeroDentroDeCanton = 0
+		END
+		SET		@NumeroDentroDeCanton = @NumeroDentroDeCanton + 1
+		--PRINT	'# dentro de cantón: ' + CONVERT(VARCHAR(256), @NumeroDentroDeCanton)
+		SET		@Canton = (SELECT Nombre FROM Canton WHERE Codigo = @Canton)
+		--PRINT	'Cantón: ' + @Canton
+		SET		@NumeroRutaNuevo = (@Canton + ', calle ' + CONVERT(VARCHAR(32), @NumeroDentroDeCanton))
+		--PRINT	'Nombre final: ' + @NumeroRutaNuevo
+		INSERT INTO Camino
+		VALUES	(@NumeroRutaNuevo, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar)
+		--DELETE	FROM caminoTmp2
+		--WHERE	ID = @IDRutaInsertada
+		FETCH NEXT FROM cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
 	END
-	ELSE
-	BEGIN
-		INSERT	INTO	Tabla_Temporal_Contadores_Calles_Cantones
-		VALUES	(@Canton, 1)
-		SET		@NumeroDentroDeCanton = 0
-	END
-	SET		@NumeroDentroDeCanton = @NumeroDentroDeCanton + 1
-	--PRINT	'# dentro de cantón: ' + CONVERT(VARCHAR(256), @NumeroDentroDeCanton)
-	SET		@Canton = (SELECT Nombre FROM Canton WHERE Codigo = @Canton)
-	--PRINT	'Cantón: ' + @Canton
-	SET		@NumeroRutaNuevo = (@Canton + ', calle ' + CONVERT(VARCHAR(32), @NumeroDentroDeCanton))
-	--PRINT	'Nombre final: ' + @NumeroRutaNuevo
-	INSERT INTO Camino
-	VALUES	(@NumeroRutaNuevo, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar)
-	DELETE	FROM caminoTmp2
-	WHERE	ID = @IDRutaInsertada
-	FETCH NEXT FROM cursor_calles_sin_nombrar INTO @IDRutaInsertada, @TipoRutaSinNombrar, @LongitudRutaSinNombrar, @GeomRutaSinNombrar
+	CLOSE		cursor_calles_sin_nombrar
+	DEALLOCATE	cursor_calles_sin_nombrar
 END
-CLOSE		cursor_calles_sin_nombrar
-DEALLOCATE	cursor_calles_sin_nombrar
-DROP TABLE	Tabla_Temporal_Contadores_Calles_Cantones
 
 --SELECT * FROM Tabla_Temporal_Contadores_Calles_Cantones
 
 SELECT COUNT(*) FROM Camino		--2910 antes de empezar
 SELECT COUNT(*) FROM caminoTmp2 --64111 SIN NOMBRE Y SIN REPETIR GEOMETRÍAS
 								--63747 sin nombre, después de borrar las que ya están en Camino (tomar en cuenta las que ya tenían nombre)
+								--47193 fallaron
+
+SELECT count(*),  geom.STGeometryType() from caminoTmp2 group by geom.STGeometryType()
+SELECT count(*),  geom.STGeometryType() from Camino group by geom.STGeometryType()
+
+select geom from camino where geom.STGeometryType() = 'Polygon'
+
+
+	CREATE	TABLE Tabla_Temporal_Contadores_Calles_Cantones
+	(
+		CodigoCanton	INT,
+		CantidadCalles	INT
+	)
+
+
+-- Recuperacion del maximo de las calles de la tabla
+Declare @Numero		integer,
+		@Canton		varchar(20),
+		@Codigo		integer
+Declare cursor_canton cursor for
+	Select nombre, codigo from Canton
+OPEN cursor_canton
+FETCH FROM cursor_canton INTO @Canton, @Codigo
+WHILE( @@FETCH_STATUS = 0 )
+BEGIN
+	SET @Numero = ( SELECT MAX( dbo.ParseNumber( NumeroRuta ) )
+					FROM Camino
+					Where NumeroRuta LIKE (@Canton + '%') )
+	INSERT INTO Tabla_Temporal_Contadores_Calles_Cantones VALUES( @Codigo, @Numero + 1 )
+	FETCH NEXT FROM cursor_canton INTO @Canton, @Codigo
+END
+CLOSE cursor_canton
+DEALLOCATE cursor_canton
+
