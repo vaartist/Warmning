@@ -34,6 +34,7 @@ SET GEOM = GEOMETRY::STGeomFromWKB(geom.Reduce(0.00001).STAsBinary(), geom.STSri
 
 SELECT Provincia, GEOM FROM provinciaTmp;
 
+-- Aun asi ocurren problemas de colision entre geometrias
 SELECT P1.Provincia, P2.Provincia
 FROM provinciaTmp P1, provinciaTmp P2
 WHERE P1.geom.STIntersects(P2.geom) = 1 AND P1.COD_PROV < P2.COD_PROV;
@@ -254,7 +255,6 @@ INSERT INTO Unidades_Estacion_Bomberos
 SELECT Nombre, 'Rescate', dbo.ParseNumber(Rescate) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
 INSERT INTO Unidades_Estacion_Bomberos
 SELECT Nombre, 'Forestales', dbo.ParseNumber(Forestales) FROM bomberosTmp WHERE NOMBRE in ( SELECT Nombre FROM Estacion_Bomberos );
---No se pudo insertar 2 estaciones de bomberos puesto su geometria no coincidia con ningun distrito
 --
 
 

@@ -81,7 +81,6 @@ CREATE TABLE Camino(
 	Tipo					VARCHAR(32),
 	Longitud				FLOAT, -- Kilometros
 	Geom					GEOMETRY,
-	Revisado				BIT,
 
 	CONSTRAINT pk_camino PRIMARY KEY(NumeroRuta)
 );
