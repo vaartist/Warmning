@@ -25,3 +25,19 @@ END
 --Cerrar cursor
 CLOSE cursor_tabla
 DEALLOCATE cursor_tabla
+
+--Borrar de caminoTmp2 las rutas que ya fueron insertadas a Camino por el procedimiento largo, usando geometrías
+DECLARE @Geom	GEOMETRY
+DECLARE	cursor_tabla CURSOR FOR
+	SELECT	geom
+	FROM	Camino
+OPEN cursor_tabla
+FETCH cursor_tabla INTO @Geom
+WHILE(@@FETCH_STATUS = 0)
+BEGIN
+	DELETE	FROM caminoTmp2
+	WHERE	geom.STEquals(@Geom) = 1
+	FETCH NEXT FROM cursor_tabla INTO @Geom
+END
+CLOSE cursor_tabla
+DEALLOCATE cursor_tabla
